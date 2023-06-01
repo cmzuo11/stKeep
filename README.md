@@ -7,26 +7,26 @@ Overview of the stKeep model. a-c Given each SRT data with four-layer profiles: 
 
 # Installation
 
-## Install stMVC
+## Install stKeep
 
 Installation was tested on Red Hat 7.6 with Python 3.6.12 and torch 1.6.0 on a machine with one 40-core Intel(R) Xeon(R) Gold 5115 CPU addressing with 132GB RAM, and two NVIDIA TITAN V GPU addressing 24GB. stMVC is implemented in the Pytorch framework. Please run stMVC on CUDA if possible. 
 
-#### 1. Grab source code of stMVC
+#### 1. Grab source code of stKeep
 
 ```
-git clone https://github.com/cmzuo11/stMVC.git
+git clone https://github.com/cmzuo11/stKeep.git
 
 cd stMVC
 ```
 
-#### 2. Install stMVC in the virtual environment by conda 
+#### 2. Install stKeep in the virtual environment by conda 
 
 * Firstly, install conda: https://docs.anaconda.com/anaconda/install/index.html
 
-* Then, automatically install all used packages (described by "used_package.txt") for stMVC in a few mins.
+* Then, automatically install all used packages (described by "used_package.txt") for stKeep in a few mins.
 
 ```
-conda create -n stMVC python=3.6.12 pip
+conda create -n stKeep python=3.6.12 pip
 
 source activate
 
@@ -182,6 +182,6 @@ top_markers   = FindAllMarkers(Seurat_smooth, assay='SCT', slot='data', only.pos
 
 # Citation
 
-Chunman Zuo*, Yijian Zhang, Chen Cao, Jinwang Feng, Mingqi Jiao, and Luonan Chen*. Elucidating tumor heterogeneity from spatially resolved transcriptomics data by multi-view graph collaborative learning. 2022. (submitted).
+Chunman Zuo* and Luonan Chen*. Dissecting tumor microenvironment from spatially resolved transcriptomics data by heterogeneous graph learning. 2023. (submitted).
 
 
