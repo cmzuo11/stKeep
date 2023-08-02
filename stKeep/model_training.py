@@ -26,7 +26,7 @@ from stKeep.utilities import normalize, load_data_RNA, load_data_cell, load_ccc_
 from stKeep.modules import Cell_module, Gene_module, CCI_model, AE
 
 
-def Trian_cell_model( args, preName):
+def Trian_cell_model( args):
 	nei_index, features, sematic_path, positive_pairs, cellName = load_data_cell(args)
 
 	feat_dim_list  = [i.shape[1] for i in features]
@@ -81,16 +81,16 @@ def Trian_cell_model( args, preName):
 	embeds_mp = model.get_mp_embeds(feats, smps)
 	embeds_sc = model.get_sc_embeds(feats, nei_index)
 
-	torch.save(model.state_dict(), args.outPath + 'Cell_module-{}.pkl'.format(preName) )
+	#torch.save(model.state_dict(), args.outPath + 'Cell_module.pkl' )
 
 	atten_mul_V, atten_mul_R, atten_recep, atten_adj_V, atten_adj_L = model.get_attention_mp(feats, smps)    
 	atten_var, atten_inter  = model.get_attention_sc(feats, nei_index)
 
-	pd.DataFrame(data=embeds_mp.data.cpu().numpy(), index= cellName).to_csv( args.outPath + 'Semantic_representations-{}.txt'.format(preName) , sep='\t')
-	pd.DataFrame(data=embeds_sc.data.cpu().numpy(), index= cellName).to_csv( args.outPath + 'Hierarchical_representations-{}.txt'.format(preName) , sep='\t')
+	pd.DataFrame(data=embeds_mp.data.cpu().numpy(), index= cellName).to_csv( args.outPath + 'Semantic_representations.txt' , sep='\t')
+	pd.DataFrame(data=embeds_sc.data.cpu().numpy(), index= cellName).to_csv( args.outPath + 'Hierarchical_representations.txt' , sep='\t')
 
 
-def Trian_gene_model( args, preName ):
+def Trian_gene_model( args ):
 
 	nei_index, features, positive_pairs, geneSymbol = load_data_RNA(args)
 	feat_dim_list  = [i.shape[1] for i in features]
@@ -141,11 +141,11 @@ def Trian_gene_model( args, preName ):
 	print("Total time: ", time, "s")
 
 	embeds  = model.get_embeds(feats, nei_index)
-	pd.DataFrame( data=embeds.data.cpu().numpy(), index = geneSymbol.tolist() ).to_csv( args.outPath + 'Gene_module_representation-{}.txt'.format(preName) , sep='\t') 
-	torch.save( model.state_dict(), args.outPath + 'Gene_model-{}.pkl'.format(preName) )
+	pd.DataFrame( data=embeds.data.cpu().numpy(), index = geneSymbol.tolist() ).to_csv( args.outPath + 'Gene_module_representation.txt' , sep='\t') 
+	#torch.save( model.state_dict(), args.outPath + 'Gene_model.pkl' )
 
 
-def Trian_CCC_model( args, preName):
+def Trian_CCC_model( args):
 
 	nei_adj, spots_ligand, spots_recep, pos, cellName, LRP_name = load_ccc_data(args)
 
@@ -201,11 +201,11 @@ def Trian_CCC_model( args, preName):
 	time      = (endtime - starttime).seconds
 	print("Total time: ", time, "s")
 
-	torch.save(model.state_dict(), args.outPath + 'CCC_module-{}.pkl'.format(preName))
+	#torch.save(model.state_dict(), args.outPath + 'CCC_module.pkl')
 
 	LR_activity  = model.return_LRP_strength(nei_adj, spots_ligand, spots_recep)
 
-	pd.DataFrame(data=LR_activity.data.cpu().numpy(), index = cellName.tolist(), columns = LRP_name.tolist() ).to_csv( args.outPath + 'CCC_module_LRP_strength-{}.txt'.format(preName) , sep='\t')
+	pd.DataFrame(data=LR_activity.data.cpu().numpy(), index = cellName.tolist(), columns = LRP_name.tolist() ).to_csv( args.outPath + 'CCC_module_LRP_strength.txt' , sep='\t')
 
 
 def RNA_encoding_train(args, adata = None, test_size_prop = 0.1):
@@ -251,6 +251,5 @@ def RNA_encoding_train(args, adata = None, test_size_prop = 0.1):
 
 	latent_z   = model.predict(total_loader, out='z' )
 
-	torch.save(model, args.outPath + '/Cell_encoding_AE_model.pt')
+	#torch.save(model, args.outPath + '/Cell_encoding_AE_model.pt')
 	pd.DataFrame( latent_z, index= adata.obs_names ).to_csv( args.outPath + '/Cell_encoding_AE.txt', sep='\t'  ) 
-
