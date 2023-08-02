@@ -48,24 +48,37 @@ pip install -r used_package.txt
 
 * A general output of 10X pipeline, for example, a directory includes a file named filtered_feature_bc_matrix.h5, a directory named spatial with five files: tissue_positions_list.csv, tissue_lowres_image.png, tissue_hires_image.png, metrics_summary_csv.csv, scalefactors_json.json, and a directory named as filtered_feature_bc_matrix with three files: matrix.mtx.gz, features.tsv.gz, and barcodes.tsv.gz;  
 
-* Take slice 151507 as an example, you can download it by the following scripts:
-
-```
-wget https://zenodo.org/record/7244758/files/stKeep_test_data.zip
-
-unzip stKeep_test_data.zip
-```
-
-Note: The folder named 'DLPFC_151507' contains the raw data of slice 151507.
+* Take slice 151507 as an example, you can find it in the test_data.
 
 ## Run
 
-### Step 1. Preprocess raw data
+### Step 1. Region annotation (for tumor samples)
 
-This function automatically (1) learns 50-dimensional features from 2000 highly variable genes of gene expression data, (2) trains SimCLR model (500 iterations) by data augmentations and contrastive learning and extracts 2048-dimensional visual features from histological data, and (3) saves the physical location of each spot into a file 'Spot_location.csv' into a folder named spatial of the current directory.
+You can adapt two different methods to define pathological regions, i.e., tumor regions:
+
+#### Method 1 
+
+* install the Loupe browser software from the website: https://www.10xgenomics.com/products/loupe-browser/downloads, and apply it to annotate cells based on tumor regions manually.
+
+#### Method 2
+  
+* install the labelme software from the link on Github: https://github.com/wkentaro/labelme, and apply it to manually outline each tumor region based on our defined strategy, and save the annotation into a json file named 'tissue_hires_image.json' of a directory named image_segmentation.
+
+* Define the classification for each spot based on above-generated json file. Here, we use IDC dataset as an example.
 
 ```
-python Preprcessing_stKeep.py --basePath ./stKeep_test_data/DLPFC_151507/ 
+python Image_cell_segmentation.py --basePath ./test_data/IDC/ --jsonFile tissue_hires_image.json
+```
+Note: To reduce your waiting time, we have uploaded the tissue_hires_image.json and the processed result from step 1 into a folder named IDC. 
+
+### Run cell module
+
+#### Calculate the input data for the cell module
+
+This function automatically calculates input data for the cell module, including the relations between cells and genes, the links between cells and annotated regions, 50-dimensional representations from highly variable genes, physical spatial location, 2048-dimensional visual features from histological data, and cell positive pairs.
+
+```
+python Preprocess_Cell_module.py --basePath ./test_data/DLPFC_151507/ 
 ```
 
 The running time mainly depends on the iteration of SimCLR training. It takes 3.7h to generate the above-described files. You can modify the following parameters to reduce time:
@@ -76,33 +89,97 @@ The running time mainly depends on the iteration of SimCLR training. It takes 3.
 
 To reproduce the result, you should use the default parameters.
 
-Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./stKeep_test_data/DLPFC_151507/stKeep/. You can directly perform step 3.
+Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
 
-### Step 2. Manual region segmentation (for IDC dataset)
+#### Learn cell representations by cell module
 
-You can adapt two different methods to define the class of each spot:
-
-#### method 1 
-
-* install the Loupe browser software from the website: https://www.10xgenomics.com/products/loupe-browser/downloads, and apply it to manually annotate cells based on our previously defined region segmentation.
-
-#### method 2
-  
-* install the labelme software from the link on Github: https://github.com/wkentaro/labelme, and apply it to manually outline each tumor region based on our defined strategy, and save the annotation into a json file named 'tissue_hires_image.json' of a directory named image_segmentation.
-
-* Define the classification for each spot based on above-generated json file. Here, we use IDC dataset as an example.
+This function automatically learns cell-module representations by heterogeneous graph learning. It takes ~6 mins for DLPFC_151507 and ~9 mins for IDC.
 
 ```
-python Image_cell_segmentation.py --basePath ./stKeep_test_data/IDC/ --jsonFile tissue_hires_image.json
+python Cell_module.py --basePath ./test_data/DLPFC_151507/
 ```
-Note: To reduce your waiting time, we have uploaded the tissue_hires_image.json and the processed result from step 1 into a folder named IDC. You can directly perform step 3.
+In running, the useful parameters:
 
-### Step 3. Run stKeep model
+* lr_T1 for HSG, lr_T2 for SLG, lr_T3 for collaborative learning: defines learning rate parameters for learning view-specific representations by single-view graph and robust representations by multi-view graph. i.e., . The default value of the three parameters is 0.002. You can adjust them from 0.001 to 0.003 by 0.001;
 
-This function automatically learns cell-module representations by heterogeneous graph learning. It takes ~7 mins for DLPFC_151507 and ~9 mins for IDC.
+* max_epoch_T: defines the max iteration for training view-specific graph or multi-view graphs. The default value is 500. You can modify it. The larger the parameter, the more time.
+
+* beta_pa: defines the penalty for the knowledge transfer from robust representations to view-specific representations. The default value is 8.
+
+* knn: defines the K-nearest similarity spots for each spot to construct HSG or SLG. The default value is 7 where the K-nearest spots for a spot include itself.
+
+* latent_T1 and latent_T2 define the dimension of two layers of GAT for SGATE model. Here, the default value of the DLPFC and IDC datasets is 25 and 10, 32 and 16, respectively.
+
+* fusion_type: definies the multi-view graph fusion types.
+
+To reproduce the result, you should use the default parameters.
+
+### Run gene module
+
+#### Calculate the input data for the gene module
+
+This function automatically calculates input data for the cell module, including the gene module, including the relations between genes and cells, the links between genes and clusters (or cell-states), and gene-positive pairs.
 
 ```
-python stKeep_model.py --basePath ./stKeep_test_data/DLPFC_151507/
+python Preprocess_Gene_module.py --basePath ./test_data/DLPFC_151507/ 
+```
+
+The running time mainly depends on the iteration of SimCLR training. It takes 3.7h to generate the above-described files. You can modify the following parameters to reduce time:
+
+* batch_size_I: defines the batch size for training SimCLR model. The default value is 128. You can modify it based on your memory size. The larger the parameter, the less time.
+
+* max_epoch_I: defines the max iteration for training SimCLR model. The default value is 500. You can modify it. The smaller the parameter, the less time.
+
+To reproduce the result, you should use the default parameters.
+
+Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
+
+#### Learn gene representations by gene module
+
+This function automatically learns gene-module representations by heterogeneous graph learning. It takes ~1 min for DLPFC_151507 and ~9 mins for IDC.
+
+```
+python Gene_module.py --basePath ./test_data/DLPFC_151507/
+```
+In running, the useful parameters:
+
+* lr_T1 for HSG, lr_T2 for SLG, lr_T3 for collaborative learning: defines learning rate parameters for learning view-specific representations by single-view graph and robust representations by multi-view graph. i.e., . The default value of the three parameters is 0.002. You can adjust them from 0.001 to 0.003 by 0.001;
+
+* max_epoch_T: defines the max iteration for training view-specific graph or multi-view graphs. The default value is 500. You can modify it. The larger the parameter, the more time.
+
+* beta_pa: defines the penalty for the knowledge transfer from robust representations to view-specific representations. The default value is 8.
+
+* knn: defines the K-nearest similarity spots for each spot to construct HSG or SLG. The default value is 7 where the K-nearest spots for a spot include itself.
+
+* latent_T1 and latent_T2 define the dimension of two layers of GAT for SGATE model. Here, the default value of the DLPFC and IDC datasets is 25 and 10, 32 and 16, respectively.
+
+* fusion_type: definies the multi-view graph fusion types.
+
+To reproduce the result, you should use the default parameters.
+
+
+### Run cell-cell communication module
+
+#### Calculate the input data for the CCC module
+
+This function automatically calculates input data for the CCC module, including the denoised and normalized gene expression for ligands and receptors.
+
+```
+python Preprocess_CCC_module.py --basePath ./test_data/DLPFC_151507/ 
+```
+
+The running time mainly depends on the iteration of SimCLR training. It takes ~3 mins to generate the above-described files.
+
+To reproduce the result, you should use the default parameters.
+
+Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
+
+#### Learn ligand-receptor interaction strengths by CCC module
+
+This function automatically learns gene-module representations by heterogeneous graph learning. It takes ~1 min for DLPFC_151507 and ~9 mins for IDC.
+
+```
+python CCC_module.py --basePath ./test_data/DLPFC_151507/
 ```
 In running, the useful parameters:
 
