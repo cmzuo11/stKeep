@@ -63,9 +63,8 @@ You can adapt two different methods to define pathological regions, i.e., tumor 
 * Define the classification for each spot based on above-generated json file. Here, we use IDC dataset as an example.
 
 ```
-python Image_cell_segmentation.py --basePath ./test_data/IDC/ --jsonFile tissue_hires_image.json
+python Image_cell_segmentation.py --inputPath ./test_data/IDC/ --jsonFile tissue_hires_image.json
 ```
-Note: To reduce your waiting time, we have uploaded the tissue_hires_image.json and the processed result from step 1 into a folder named IDC. 
 
 ### Step 2. Run cell module
 
@@ -95,7 +94,7 @@ In running, the useful parameters:
 
 * lam: defines the importance of the two types of representations (i.e., hierarchical and Semantic). The default value is 0.1. You can adjust it from 0.1 to 0.3 by 0.05;
 
-To reproduce the result, you should use the default parameters. To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
+To reproduce the result, you should use the default parameters. 
 
 #### Output file
 
@@ -108,13 +107,11 @@ To reproduce the result, you should use the default parameters. To reduce your w
 
 #### Calculate the input data for the gene module
 
-This function automatically calculates input data for the gene module, including the relations between genes and cells, the links between genes and clusters (or cell states), and gene-positive pairs.
+This function automatically calculates input data for the gene module, including the relations between genes and cells, the links between genes and clusters (or cell states), and gene-positive pairs. It takes ~6 mins to generate the above-described files. 
 
 ```
 python Preprocess_Gene_module.py --inputPath ./test_data/DLPFC_151507/
 ```
-
-It takes ~6 mins to generate the above-described files. 
 
 #### Learn gene representations by gene module
 
@@ -128,7 +125,7 @@ In running, the useful parameters:
 
 * lr: defines learning rate parameters for learning gene representations. The default value is 0.02.
 
-* attn_drop: defines the dropout rate for the attention. The default value is 0.1. You can adjust it from 0.1 to 0.3 by 0.05;
+* attn_drop: defines the dropout rate for the attention. The default value is 0.2. You can adjust it from 0.2 to 0.3 by 0.1;
   
 Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
 
@@ -145,7 +142,7 @@ This function automatically calculates input data for the CCC module, including 
 
 ```
 source(./stKeep/Processing.R)
-Preprocess_CCC_model(basePath = "./test_data/DLPFC_151507/", LRP_data = "./utilities/Uninon_Ligand_receptors.RData", Cellobj_data = "./test_data/DLPFC_151507/151507_100.RData")
+Preprocess_CCC_model(basePath = "./test_data/DLPFC_151507/", LRP_data = "./utilities/Uninon_Ligand_receptors.RData")
 ```
 
 This function loads 4,257 unique ligand-receptor pairs, selects expressed ligands and receptors for further analysis, utilizes knn_smoothing method to denoise gene expression data, and applies the denoised and normalized data for inferring CCC through the CCC model. It takes ~3 mins to generate the above-described files. 
@@ -164,13 +161,9 @@ In running, the useful parameters:
 
 * tau: defines denotes the temperature parameter. The default value is 0.5.
 
-Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
-
 #### Output file
 
 * CCC_module_LRP_strength.txt: inferred CCC interaction strength for cells.
-
-* Denosied_normalized_expression.txt: Denosied and normalized gene expression data.
   
 
 ## Further analysis
