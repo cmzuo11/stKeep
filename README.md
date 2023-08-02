@@ -141,7 +141,7 @@ In running, the useful parameters:
 This function automatically calculates input data for the CCC module, including the denoised and normalized gene expression for ligands and receptors.
 
 ```
-source(./stKeep/Processing.R)
+source("./stKeep/Processing.R")
 Preprocess_CCC_model(basePath = "./test_data/DLPFC_151507/", LRP_data = "./utilities/Uninon_Ligand_receptors.RData")
 ```
 
@@ -174,7 +174,7 @@ Some functions from the R file named Processing.R (in the stKeep folder) are bas
 
 ```
 #Generate pdf file including clustering and visualization 
-source(./stKeep/Processing.R)
+source("./stKeep/Processing.R")
 basePath       = "./test_data/DLPFC_151507/"
 MP_rep         = as.matrix(read.table( paste0(basePath, "stKeep/Semantic_representations.txt"), header = T, row.names = 1))
 SC_rep         = as.matrix(read.table( paste0(basePath, "stKeep/Hierarchical_representations.txt"), header = T, row.names = 1))
