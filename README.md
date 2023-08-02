@@ -74,7 +74,7 @@ Note: To reduce your waiting time, we have uploaded the tissue_hires_image.json 
 This function automatically calculates input data for the cell module, including the relations between cells and genes, the links between cells and annotated regions, 50-dimensional representations from highly variable genes, physical spatial location, 2048-dimensional visual features from histological data, and cell positive pairs.
 
 ```
-python Preprocess_Cell_module.py --basePath ./test_data/DLPFC_151507/
+python Preprocess_Cell_module.py --inputPath ./test_data/DLPFC_151507/
 ```
 The running time mainly depends on the iteration of the histological image extraction model. It takes ~3h to generate the above-described files. You can modify the following parameters to reduce time:
 
@@ -87,7 +87,7 @@ The running time mainly depends on the iteration of the histological image extra
 This function automatically learns cell-module representations by heterogeneous graph learning. It takes ~6 mins for DLPFC_151507.
 
 ```
-python Cell_module.py --basePath ./test_data/DLPFC_151507/
+python Cell_module.py --inputPath ./test_data/DLPFC_151507/
 ```
 In running, the useful parameters:
 
@@ -111,7 +111,7 @@ To reproduce the result, you should use the default parameters. To reduce your w
 This function automatically calculates input data for the gene module, including the relations between genes and cells, the links between genes and clusters (or cell states), and gene-positive pairs.
 
 ```
-python Preprocess_Gene_module.py --basePath ./test_data/DLPFC_151507/
+python Preprocess_Gene_module.py --inputPath ./test_data/DLPFC_151507/
 ```
 
 It takes ~6 mins to generate the above-described files. 
@@ -121,7 +121,7 @@ It takes ~6 mins to generate the above-described files.
 This function automatically learns gene-module representations by heterogeneous graph learning. It takes ~1 min for DLPFC_151507.
 
 ```
-python Gene_module.py --basePath ./test_data/DLPFC_151507/
+python Gene_module.py --inputPath ./test_data/DLPFC_151507/
 ```
 
 In running, the useful parameters:
@@ -144,24 +144,25 @@ Note: To reduce your waiting time, we have uploaded our preprocessed data into t
 This function automatically calculates input data for the CCC module, including the denoised and normalized gene expression for ligands and receptors.
 
 ```
-python Preprocess_CCC_module.py --basePath ./test_data/DLPFC_151507/ 
+source(./stKeep/Processing.R)
+Preprocess_CCC_model(basePath = "./test_data/DLPFC_151507/", LRP_data = "./utilities/Uninon_Ligand_receptors.RData", Cellobj_data = "./test_data/DLPFC_151507/151507_100.RData")
 ```
 
 This function loads 4,257 unique ligand-receptor pairs, selects expressed ligands and receptors for further analysis, utilizes knn_smoothing method to denoise gene expression data, and applies the denoised and normalized data for inferring CCC through the CCC model. It takes ~3 mins to generate the above-described files. 
 
 #### Learn ligand-receptor interaction strengths through the CCC module
 
-This function automatically learns LRP interaction strength by the CCC module. It takes ~30 min for DLPFC_151507.
+This function automatically learns LRP interaction strength by the CCC module. It takes ~20 min for DLPFC_151507.
 
 ```
-python CCC_module.py --basePath ./test_data/DLPFC_151507/
+python CCC_module.py --inputPath ./test_data/DLPFC_151507/
 ```
 
 In running, the useful parameters:
 
-* lr_cci: defines learning rate parameters. The default value of the three parameters is 0.002. You can adjust them from 0.001 to 0.003 by 0.001;
+* lr_cci: defines learning rate parameters. The default value of the three parameters is 0.001;
 
-* tau: defines denotes the temperature parameter. The default value is 500. You can modify it. The larger the parameter, the more time.
+* tau: defines denotes the temperature parameter. The default value is 0.5.
 
 Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
 
@@ -180,8 +181,6 @@ Some functions from the R file named Processing.R (in the stKeep folder) are bas
 
 ```
 #Generate pdf file including clustering and visualization 
-library('Seurat')
-library('ggplot2')
 source(./stKeep/Processing.R)
 basePath       = "./test_data/DLPFC_151507/"
 MP_rep         = as.matrix(read.table( paste0(basePath, "stKeep/Semantic_representations.txt"), header = T, row.names = 1))
@@ -195,22 +194,17 @@ Cell_obj       = Cell_modules(basePath, cbind(MP_rep, SC_rep), 10, 7, basePath, 
 #Generate cluster-specific gene-gene interactions.
 gene_rep     = as.matrix(read.table( paste0(basePath, "stKeep/Gene_module_representation.txt"), header = T, row.names = 1))
 Gene_obj     = Gene_modules(Cell_obj, gene_rep, 7, basePath, "stKeep/stKeep_gene_clustering.pdf"  )
-Molecular_network(Cell_obj, basePath, "stKeep/stKeep_molecular_network.pdf"  )
+Molecular_network(Gene_obj, basePath, "stKeep/stKeep_molecular_network.pdf"  )
 ```
 
 * CCC_modules: identification of CCC patterns from CCC-modules
   
 ```
 #Generate cluster-specific CCC patterns.
-input_features = as.matrix(robust_rep[match(colnames(Seurat_obj), row.names(robust_rep)),])
-Seurat_obj     = FindVariableFeatures(Seurat_obj, nfeatures=2000)
-hvg            = VariableFeatures(Seurat_obj)
-rna_data       = as.matrix(Seurat_obj@assays$Spatial@counts)
-hvg_data       = rna_data[match(hvg, row.names(rna_data)), ]
-
-mat_smooth     = knn_smoothing( hvg_data, 3, input_features )
-colnames(mat_smooth) = colnames(Seurat_obj)
-
+## CCC patterns
+featues      = c("RELN->ITGB1", "PENK->ADRA2A")
+LR_activ     = as.matrix(read.table( paste0(basePath, "stKeep/CCC_module_LRP_strength.txt"), header = T, row.names = 1))
+Cell_obj     = CCC_modules(Cell_obj, LR_activ, featues, basePath, "stKeep/CCC_patterns.pdf" )
 ```
 
 * ......
