@@ -71,6 +71,7 @@ Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_dat
   sub_idc         = subset(idc, cells = spot_d)
   represen_data   = as.matrix(read.table(paste0(basePath,"stKeep/Semantic_representations.txt"), header = T, row.names = 1))
   represen_data1  = as.matrix(read.table(paste0(basePath,"stKeep/Hierarchical_representations.txt"), header = T, row.names = 1))
+  spot_locs       = read.table(paste0(basePath,"stKeep/Spot_location.txt"),header = T, row.names = 1)
   latent_fea      = cbind(represen_data,represen_data1)[match(colnames(sub_idc), row.names(represen_data)),]
   mat             = as.matrix(sub_idc@assays$Spatial@counts)
   mat_smooth      = knn_smoothing( mat, 3, latent_fea )
@@ -105,10 +106,9 @@ Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_dat
   liagand_exps_n = apply(liagand_exps, 2, function(x){(x-min(x))/(max(x)-min(x))})
   recep_exps_n   = apply(recep_exps, 2, function(x){(x-min(x))/(max(x)-min(x))})
   
-  colnames(liagand_exps_n) = uniq_LR
-  colnames(recep_exps_n)   = uniq_LR
-  write.table(liagand_exps_n, file = paste0(basePath, "stKeep/ligands_expression.txt"), sep = "\t", quote = F)
-  write.table(recep_exps_n, file = paste0(basePath, "stKeep/receptors_expression.txt"), sep = "\t", quote = F)
+  colnames(liagand_exps_n) = colnames(recep_exps_n) = uniq_LR
+  write.table(liagand_exps_n[match(row.names(spot_locs), row.names(liagand_exps_n)),], file = paste0(basePath, "stKeep/ligands_expression.txt"), sep = "\t", quote = F)
+  write.table(recep_exps_n[match(row.names(spot_locs), row.names(recep_exps_n)),], file = paste0(basePath, "stKeep/receptors_expression.txt"), sep = "\t", quote = F)
 }
 
 Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, pdf_file = NULL ){
