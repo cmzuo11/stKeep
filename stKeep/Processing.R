@@ -3,18 +3,119 @@ library('ggplot2')
 library('Matrix')
 library('ggrepel')
 library('igraph')
-library("pheatmap")
 
 plot_colors=c("0" = "#6D1A9C", "1" = "#CC79A7","2"  = "#7495D3", "3" = "#59BE86", "4" = "#56B4E9", "5" = "#FEB915", 
               "6" = "#DB4C6C", "7" = "#C798EE", "8" = "#3A84E6", "9"= "#FF0099FF", "10" = "#CCFF00FF",
               "11" = "#268785", "12"= "#FF9900FF", "13"= "#33FF00FF", "14"= "#AF5F3C", "15"= "#DAB370", 
               "16" = "#554236", "17"= "#787878", "18"= "#877F6C")
 
+suppressPackageStartupMessages(library(Matrix))
+suppressPackageStartupMessages(library(rsvd))
+
+randomized_pca <- function(tmat, d, seed){
+  set.seed(seed)
+  rpca_obj <- rpca(tmat, k=d, center=T, scale=F, retx=T, p=10, q=7)
+  rpca_obj$x
+}
+
+normalization_median <- function(mat){
+  num_transcripts <- Matrix::colSums(mat)
+  size_factor <- median(num_transcripts, na.rm = T) / num_transcripts
+  t(t(mat) * size_factor)
+}
+
+freeman_tukey_transform <- function(mat){
+  sqrt(mat) + sqrt(mat + 1)
+}
+
+pdist <- function(tmat){
+  mtm <- Matrix::tcrossprod(tmat)
+  sq <- rowSums(tmat^2)
+  out0 <- outer(sq, sq, "+") - 2 * mtm
+  out0[out0 < 0] <- 0
+  sqrt(out0)
+}
+
+smoother_aggregate_nearest_nb <- function(mat, D, k){
+  sapply(seq_len(ncol(mat)), function(cid){
+    nb_cid <- head(order(D[cid, ]), k)
+    closest_mat <- mat[, nb_cid, drop=FALSE]
+    return(Matrix::rowSums(closest_mat))
+  })
+}
+
+knn_smoothing <- function(mat, k, latent_matrix, seed=42){
+  #' @param mat A numeric matrix with gene names on rows and cell names on columns.
+  #' @param k Number of nearest neighbours to aggregate.
+  #' @param latent_matrix low-representation matrix with sample by feature.
+  #' @param seed Seed number. (default=42)
+  #' @return A smoothed numeric matrix.
+  cname     = colnames(mat)
+  gname     = rownames(mat)
+  num_steps = ceiling(log2(k + 1))
+  S         = mat
+  D         = pdist(latent_matrix)
+  S         = smoother_aggregate_nearest_nb(mat, D, 15)
+  colnames(S) = cname
+  rownames(S) = gname
+  return(S)
+}
+
+Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_data = "./utilities/Uninon_Ligand_receptors.RData", 
+                                 Cellobj_data = "./test_data/DLPFC_151507/151507_100.RData"){
+  load(LRP_data)
+  load(Cellobj_data)
+  match_int       = which(!is.na(idc$Annotation))
+  spot_d          = colnames(idc)[match_int]
+  sub_idc         = subset(idc, cells = spot_d)
+  represen_data   = as.matrix(read.table(paste0(basePath,"stKeep/Semantic_representations.txt"), header = T, row.names = 1))
+  represen_data1  = as.matrix(read.table(paste0(basePath,"stKeep/Hierarchical_representations.txt"), header = T, row.names = 1))
+  latent_fea      = cbind(represen_data,represen_data1)[match(colnames(sub_idc), row.names(represen_data)),]
+  mat             = as.matrix(sub_idc@assays$Spatial@counts)
+  mat_smooth      = knn_smoothing( mat, 3, latent_fea )
+  sub_idc@assays$Spatial@counts = mat_smooth
+  sub_idc  = SCTransform(sub_idc, assay = "Spatial", verbose = FALSE)
+  
+  mat_it          = apply(mat, 1, function(x){length(which(x>0))})
+  aa              = intersect(uni_ligand, row.names(mat)[which(mat_it>=5)])
+  bb              = intersect(uni_receptor, row.names(mat)[which(mat_it>=5)])
+  used_li         = used_re = NULL
+  for(z in 1:length(uni_ligand))
+  {
+    if((is.element(uni_ligand[z], aa)) && (is.element(uni_receptor[z], bb)))
+    {
+      used_li = c(used_li, uni_ligand[z])
+      used_re = c(used_re, uni_receptor[z])
+    }
+  }
+  LR_pair = paste(used_li, "->", used_re, sep="")
+  uniq_LR = unique(LR_pair)
+  used_ligands   = used_receptors = NULL
+  for(m in 1:length(uniq_LR))
+  {
+    temps          = unlist(strsplit(uniq_LR[m], "[->]"))
+    used_ligands   = c(used_ligands, temps[1])
+    used_receptors = c(used_receptors, temps[2])
+  }
+  data         = as.matrix(sub_idc@assays$SCT@data)
+  liagand_exps = t(data[match(used_ligands, row.names(data)),])
+  recep_exps   = t(data[match(used_receptors, row.names(data)),])
+  
+  liagand_exps_n = apply(liagand_exps, 2, function(x){(x-min(x))/(max(x)-min(x))})
+  recep_exps_n   = apply(recep_exps, 2, function(x){(x-min(x))/(max(x)-min(x))})
+  
+  colnames(liagand_exps_n) = uniq_LR
+  colnames(recep_exps_n)   = uniq_LR
+  write.table(liagand_exps_n, file = paste0(basePath, "stKeep/ligands_expression.txt"), sep = "\t", quote = F)
+  write.table(recep_exps_n, file = paste0(basePath, "stKeep/receptors_expression.txt"), sep = "\t", quote = F)
+}
+
+
+
 Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, pdf_file = NULL ){
   idc = Load10X_Spatial(data.dir= basePath )
   idc = SCTransform(idc, assay = "Spatial", verbose = FALSE)
   idc = RunPCA(idc, assay = "SCT", verbose = FALSE, npcs = 100)
-  
   inter_c = intersect(row.names(robust_rep), colnames(idc))
   Cell_obj = subset(idc, cells =inter_c)      
   in_feas = robust_rep[match(colnames(Cell_obj), row.names(robust_rep)),]
@@ -31,7 +132,6 @@ Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, p
   }
   
   Cell_obj = RunUMAP(Cell_obj, reduction = "pca", dims = 1:dim(in_feas)[2])
-
   pdf( paste0( save_path, pdf_file ), width = 10, height = 10)
   p1  = DimPlot(Cell_obj, reduction = "umap", label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
         theme(legend.position = "none",legend.title = element_blank())+ggtitle("")
@@ -65,7 +165,6 @@ Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf
     }
   }
   Gene_obj = RunUMAP(Gene_obj, reduction = "pca", dims = 1:dim(Gene_rep)[2], verbose = FALSE, reduction.name = "umap_rna" )
-
   umap_emd = as.matrix(Gene_obj@reductions$umap_rna@cell.embeddings)
   labe_not = rep(FALSE, dim(Gene_obj)[2])
   labe_not[match(inter_genes, colnames(Gene_obj))] = T
@@ -90,11 +189,11 @@ Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf
 
 Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
   uniqu_cl = unique(as.character(Idents(Gene_obj)))
-  load("gr_network")
-  load("ppi_matrix")
-  load("LRP")
-  pdf(paste0( save_path, pdf_file ), width = 15, height = 15)
+  ppi_matrix    = readRDS("./utilities/signaling_network.rds")
+  gr_network    = readRDS("./utilities/gr_network.rds")
+  load("./utilities/Uninon_Ligand_receptors.RData")
   
+  pdf(paste0( save_path, pdf_file ), width = 15, height = 15)
   for(z in 1:length(uniqu_cl))
   {
     temp_gens = colnames(Gene_obj)[which(Idents(Gene_obj)==uniqu_cl[z])]
@@ -158,220 +257,6 @@ Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
 }
 
 
-CCC_modules <- function(Cell_obj, LRP_activ, featues, save_path = NULL, pdf_file = NULL ){
-  
-  LRP_activi   = t(LRP_activ[match(colnames(Cell_obj), row.names(LRP_activ)),])
-  LRP_activity = apply(LRP_activi, 1, function(x){(x-min(x, na.rm = T))/(max(x,na.rm = T)-min(x,na.rm = T))})
-  
-  LR_assay = CreateAssayObject(counts = t(LRP_activity))
-  Cell_obj[["LRP_activity"]] = LR_assay
-  DefaultAssay(Cell_obj)     = "LRP_activity"
-  
-  Idents(Cell_obj) = Cell_obj$Annotation
-  Diff_LRPs        = FindAllMarkers(Cell_obj, only.pos = T )
-  
-  pdf(paste0( save_path, pdf_file ), width = 10, height = 10)
-  p1 = SpatialFeaturePlot(Cell_obj, features = featues, ncol = 2)
-  plot(p1)
-  dev.off()
-  
-  return(Cell_obj)
-}
-
-
-currPath  = "/sibcb2/chenluonanlab7/cmzuo/workPath/CMSSL/spatial_result/DLPFC/151507/stKeep/"
-load("/sibcb2/chenluonanlab7/cmzuo/workPath/CMSSL/spatial_result/DLPFC/151507/151507_100.RData")
-match_int = which(!is.na(idc$Annotation))
-spot_d    = colnames(idc)[match_int]
-sub_idc   = subset(idc, cells = spot_d)
-
-represen_data   = as.matrix(read.table(paste0(currPath,"Semantic_representations.txt"), header = T, row.names = 1))
-input_features  = represen_data[match(colnames(sub_idc), row.names(represen_data)),]
-represen_data1  = as.matrix(read.table(paste0(currPath, "Hierarchical_representations.txt"), header = T, row.names = 1))
-input_features1 = represen_data1[match(colnames(sub_idc), row.names(represen_data1)),]
-combine_featus  = cbind(input_features,input_features1)
-
-original_pca_emb                   = sub_idc@reductions$pca@cell.embeddings
-row.names(combine_featus)          = row.names(original_pca_emb)
-sub_idc@reductions$pca@cell.embeddings[,1:dim(combine_featus)[2]] = combine_featus
-sub_idc = FindNeighbors(sub_idc, reduction = "pca", dims = 1:dim(combine_featus)[2], verbose = FALSE)
-
-sub_idc = RunUMAP(sub_idc, reduction = "pca", dims = 1:dim(combine_featus)[2], verbose = FALSE )
-sub_idc = FindClusters( sub_idc, resolution = 0.15 )
-
-plot_colors_B=c("5" = "#DB4C6C", "3" = "#FEB915", "2" = "#56B4E9", "4" = "#59BE86", "0" = "#7495D3",
-                "6" = "#CC79A7","1" ="#6D1A9C")
-
-pdf(paste(currPath, "HIN_clustering.pdf",sep=""), width = 10, height = 10)
-p2  = SpatialDimPlot(sub_idc, label = F, label.size = 3, cols = plot_colors_B )
-plot(p2)
-p2  = DimPlot(sub_idc, label = F, label.size = 3, cols = plot_colors_B)
-plot(p2)
-dev.off()
-
-
-mp_file = c("Semantic_representations.txt")
-sc_file = c("Hierarchical_representations.txt")
-
-temp_file = c(list.files(path = currPath, pattern = "Semantic_representations-"))
-
-for(zzz in 1:length(temp_file))
-{
-  temp_pattern    = unlist(strsplit(temp_file[zzz], "Semantic_representations"))
-
-  represen_data   = as.matrix(read.table(paste0(currPath,temp_file[zzz]), header = T, row.names = 1))
-  input_features  = represen_data[match(colnames(sub_idc), row.names(represen_data)),]
-  
-  represen_data1  = as.matrix(read.table(paste(currPath, "Hierarchical_representations", temp_pattern[2],sep=""), header = T, row.names = 1))
-  input_features1 = represen_data1[match(colnames(sub_idc), row.names(represen_data1)),]
-  
-  pdf(paste(currPath, "HIN_clustering_mp_sc-check", temp_pattern[2], ".pdf",sep=""), width = 10, height = 10)
-  plot_clustering_data(sub_idc, input_features)
-  plot_clustering_data(sub_idc, input_features1)
-  plot_clustering_data(sub_idc, cbind(input_features,input_features1))
-  dev.off()
-}
-
-
-represen_data   = as.matrix(read.table(paste0(currPath,"Cell_encoding_AE.txt"), header = T, row.names = 1))
-input_features  = represen_data[match(colnames(sub_idc), row.names(represen_data)),]
-pdf(paste(currPath, "AE_cl.pdf",sep=""), width = 10, height = 10)
-plot_clustering_data(sub_idc, input_features)
-dev.off()
-
-represen_data   = as.matrix(read.table("/sibcb2/chenluonanlab7/cmzuo/workPath/Spatial_check/DLPFC/151507/HVGs_2000_AE_50.txt"))
-pdf(paste(currPath, "AE_cl.pdf",sep=""), width = 10, height = 10)
-plot_clustering_data(sub_idc, represen_data)
-dev.off()
-
-
-## gene modules
-cancer_cl   = c("WM", "Layer6", "Layer5", "Layer4", "Layer3", "Layer2", "Layer1")
-bk = c(seq(0, 0.4,by=0.001),seq(0.401, 1,by=0.001))
-library('igraph')
-library("pheatmap")
-
-gene_latent = as.matrix(read.table(paste0(currPath, "Gene_module_representation.txt"), header = T, row.names = 1))
-count_new   = t(as.matrix(sub_idc@assays$Spatial@counts))[,match(row.names(gene_latent), row.names(sub_idc) )]
-
-sub_pbmc    = CreateSeuratObject(counts = count_new)
-sub_pbmc    = FindVariableFeatures(sub_pbmc, selection.method = "vst", nfeatures = dim(count_new)[1])
-
-sub_pbmc = SCTransform(sub_pbmc, verbose = T)
-sub_pbmc = NormalizeData(sub_pbmc,  verbose = FALSE)
-
-sub_pbmc    = ScaleData(sub_pbmc, verbose = FALSE)
-sub_pbmc    = RunPCA(sub_pbmc, npcs = 50, verbose = FALSE)
-datss       = as.matrix(sub_pbmc@assays$RNA@data)
-
-original_pca_emb        = sub_pbmc@reductions$pca@cell.embeddings
-row.names(gene_latent)  = row.names(original_pca_emb)
-sub_pbmc@reductions$pca@cell.embeddings[,1:dim(gene_latent)[2]] = gene_latent
-sub_pbmc = FindNeighbors(sub_pbmc, reduction = "pca", dims = 1:dim(gene_latent)[2], verbose = FALSE)
-
-sub_pbmc     = FindNeighbors(sub_pbmc, reduction = "pca", verbose = FALSE, dims = 1:50)
-sub_pbmc     = FindClusters( sub_pbmc, resolution = 0.6,  verbose = FALSE )
-sub_pbmc     = RunUMAP(sub_pbmc, reduction = "pca", dims = 1:50, verbose = FALSE, reduction.name = "umap_rna" )
-uniqu_cl     = unique(as.character(Idents(sub_pbmc)))
-ac_mean      =  Gene_mean_2(t(datss), as.character(Idents(sub_pbmc)), as.character(sub_idc$Annotation), cancer_cl)
-pdf(paste(currPath, "HIN_model_clustering_new.pdf",sep=""), width = 10, height = 10)
-pheatmap(ac_mean, cluster_rows = F, cluster_cols = F, scale="row",main="", cex.main=2, breaks=bk,
-         show_rownames=T, treeheight_row = F, angle_col= 90, fontsize_row = 15, fontsize_number = 15, fontsize_col = 15,
-         color=c(colorRampPalette(colors = c("blue","white"))(length(bk)/2),colorRampPalette(colors = c("white","red"))(length(bk)/2)) )
-p1 = DimPlot(sub_pbmc, reduction = "umap_rna", label = T, label.size = 4)+
-  ggtitle("")+ theme_classic(base_size = 15)+ theme(legend.position = "none")
-plot(p1)
-dev.off()
-
-
-temp_file = c(list.files(path = currPath, pattern = "Gene_module_representation-"))
-count     = as.matrix(sub_idc@assays$Spatial@counts)
-count_new = t(count[match(row.names(gene_latent), row.names(count) ),])
-sub_pbmc    = CreateSeuratObject(counts = count_new)
-sub_pbmc    = FindVariableFeatures(sub_pbmc, selection.method = "vst", nfeatures = dim(count_new)[1])
-sub_pbmc    = ScaleData(sub_pbmc, verbose = FALSE)
-sub_pbmc    = RunPCA(sub_pbmc, npcs = 50, verbose = FALSE)
-datss       = as.matrix(sub_pbmc@assays$RNA@data)
-
-
-for(z in 1:length(temp_file))
-{
-  temp_pattern    = unlist(strsplit(temp_file[z], "Gene_module_representation"))
-  gene_latent = as.matrix(read.table(paste0(currPath, temp_file[z]), header = T, row.names = 1))
-  sub_pbmc@reductions$pca@cell.embeddings[,1:dim(gene_latent)[2]] = gene_latent
-  sub_pbmc = FindNeighbors(sub_pbmc, reduction = "pca", dims = 1:dim(gene_latent)[2], verbose = FALSE)
-  sub_pbmc = FindNeighbors(sub_pbmc, reduction = "pca", verbose = FALSE, dims = 1:50)
-  for(z in seq(0.01,2,0.01))
-  {
-    sub_pbmc <- FindClusters( sub_pbmc, resolution = z,  verbose = FALSE )
-    if(length(table(Idents(sub_pbmc)))==7)
-    {
-      break
-    }
-  }
-  sub_pbmc     = RunUMAP(sub_pbmc, reduction = "pca", dims = 1:50, verbose = FALSE, reduction.name = "umap_rna" )
-  ac_mean      = Gene_mean_2(t(datss), as.character(Idents(sub_pbmc)), as.character(sub_idc$Annotation), cancer_cl)
-  umap_emd = as.matrix(sub_pbmc@reductions$umap_rna@cell.embeddings)
-  labe_not = rep(FALSE, dim(sub_pbmc)[2])
-  labe_not[match(inter_genes, colnames(sub_pbmc))] = T
-  color_not = rep(FALSE, dim(sub_pbmc)[2])
-  color_not[match(inter_genes, colnames(sub_pbmc))] = T
-  df_info  = data.frame(Genes = colnames(sub_pbmc), umap_1 = umap_emd[,1], umap_2 = umap_emd[,2], Label = labe_not, color = color_not)
-  row.names(df_info) = colnames(sub_pbmc)
-  pdf(paste(currPath, "HIN_gene_clustering-", temp_pattern[2],".pdf",sep=""), width = 10, height = 10)
-  pheatmap(ac_mean, cluster_rows = F, cluster_cols = F, scale="row",main="", cex.main=2, breaks=bk,
-           show_rownames=T, treeheight_row = F, angle_col= 90, fontsize_row = 15, fontsize_number = 15, fontsize_col = 15,
-           color=c(colorRampPalette(colors = c("blue","white"))(length(bk)/2),colorRampPalette(colors = c("white","red"))(length(bk)/2)) )
-  p1 = DimPlot(sub_pbmc, reduction = "umap_rna", label = T, label.size = 4)+
-    ggtitle("")+ theme_classic(base_size = 15)+ theme(legend.position = "none")
-  plot(p1)
-  pp = ggplot(df_info) +
-    geom_point(aes(x = umap_1, y = umap_2, col = color)) +
-    geom_text_repel(aes(x = umap_1, y = umap_2, label = ifelse(Label == T, rownames(df_info),"")),
-                    max.overlaps = Inf)
-  plot(pp)
-  dev.off()
-}
-
-
-inter_genes = c("SNAP25", "MOBP", "PCP4", "FABP7", "PVALB", "CCK", "ENC1", "AQP4", "TRABD2A", "HPCAL1", "FREM3", "KRT17")
-inter_genes = unique(inter_genes)
-temp_file = c(list.files(path = currPath, pattern = "Gene_module_representation-"))
-
-for(zzz in 1:length(temp_file))
-{
-  input_features  = as.matrix(read.table(paste0(currPath,temp_file[zzz]), header = T, row.names = 1))
-  original_pca_emb                   = sub_pbmc@reductions$pca@cell.embeddings
-  sub_pbmc@reductions$pca@cell.embeddings = input_features
-  
-  sub_pbmc = FindNeighbors(sub_pbmc, reduction = "pca", verbose = FALSE, dims = 1:50)
-  sub_pbmc = FindClusters( sub_pbmc, resolution = 0.6,  verbose = FALSE )
-  sub_pbmc = RunUMAP(sub_pbmc, reduction = "pca", dims = 1:50, verbose = FALSE, reduction.name = "umap_rna" )
-  
-  temp_pattern    = unlist(strsplit(temp_file[zzz], "Gene_module_representation"))
-  
-  umap_emd = as.matrix(sub_pbmc@reductions$umap_rna@cell.embeddings)
-  labe_not = rep(FALSE, dim(sub_pbmc)[2])
-  labe_not[match(inter_genes, colnames(sub_pbmc))] = T
-  color_not = rep(FALSE, dim(sub_pbmc)[2])
-  color_not[match(inter_genes, colnames(sub_pbmc))] = T
-  df_info  = data.frame(Genes = colnames(sub_pbmc), umap_1 = umap_emd[,1], umap_2 = umap_emd[,2], Label = labe_not, color = color_not)
-  row.names(df_info) = colnames(sub_pbmc)
-  
-  pdf(paste(currPath, "HIN_sss_clustering_", temp_pattern[2], ".pdf",sep=""), width = 10, height = 10)
-  p1 = DimPlot(sub_pbmc, reduction = "umap_rna", label = T)
-  plot(p1)
-  pp = ggplot(df_info) +
-    geom_point(aes(x = umap_1, y = umap_2, col = color)) +
-    geom_text_repel(aes(x = umap_1, y = umap_2, label = ifelse(Label == T, rownames(df_info),"")),
-                    max.overlaps = Inf)
-  plot(pp)
-  dev.off()
-}
-
-
-
-###CCC
 reNames <- function(Names)
 {
   re_names = NULL
@@ -383,38 +268,18 @@ reNames <- function(Names)
   return(re_names)
 }
 
-currPath  = "/sibcb2/chenluonanlab7/cmzuo/workPath/CMSSL/spatial_result/DLPFC/151507/stKeep/"
-temp_file = c(list.files(path = currPath, pattern = "CCC_module_LRP_strength-"))
-featues   = c("RELN->ITGB1", "PENK->ADRA2A")
-
-for(z in 14:16)
-{
-  LR_activ     = as.matrix(read.table(paste0(currPath, temp_file[z]), header = T, row.names = 1))
-  colnames(LR_activ) = reNames(colnames(LR_activ))
-  temps = unlist(strsplit(temp_file[z], "CCC_module_LRP_strength"))
-  
-  LRP_activi   = t(LR_activ[match(colnames(sub_idc), row.names(LR_activ)),])
+CCC_modules <- function(Cell_obj, LRP_activ, featues, save_path = NULL, pdf_file = NULL ){
+  colnames(LRP_activ) = reNames(colnames(LRP_activ))
+  LRP_activi   = t(LRP_activ[match(colnames(Cell_obj), row.names(LRP_activ)),])
   LRP_activity = apply(LRP_activi, 1, function(x){(x-min(x, na.rm = T))/(max(x,na.rm = T)-min(x,na.rm = T))})
-  
   LR_assay = CreateAssayObject(counts = t(LRP_activity))
-  sub_idc[["LRP_activity"]] = LR_assay
-  DefaultAssay(sub_idc)     = "LRP_activity"
-  
-  pdf(paste0( currPath, paste("CCC",temps[2],".pdf",sep="") ), width = 10, height = 10)
-  p1 = SpatialFeaturePlot(sub_idc, features = featues, ncol = 2)
+  Cell_obj[["LRP_activity"]] = LR_assay
+  DefaultAssay(Cell_obj)     = "LRP_activity"
+  Idents(Cell_obj) = Cell_obj$Annotation
+  #Diff_LRPs        = FindAllMarkers(Cell_obj, only.pos = T )
+  pdf(paste0( save_path, pdf_file ), width = 10, height = 10)
+  p1 = SpatialFeaturePlot(Cell_obj, features = featues, ncol = 2)
   plot(p1)
   dev.off()
+  return(Cell_obj)
 }
-
-
-
-LR_assay = CreateAssayObject(counts = t(LR_activ_1_n))
-sub_idc[["LR_activity"]] = LR_assay
-DefaultAssay(sub_idc)    = "LR_activity"
-
-pdf(paste(currPath, "Inter_CCC_pattern.pdf", sep=""), width = 10, height = 10)
-p1 = SpatialFeaturePlot(sub_idc, features = featues, ncol = 2)
-plot(p1)
-dev.off()
-
-
