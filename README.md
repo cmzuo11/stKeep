@@ -4,6 +4,7 @@
 
 Overview of the stKeep model. a-c Given each SRT data with four-layer profiles: histological images (I), spatial locations (S), gene expression (X), histological regions (Y), and gene-gene interactions such as PPI, GRN, and LRP as the input, stKeep integrates them to construct HG for dissecting tumor ecosystems. d Cell module adopts a cell-centered HG to capture local hierarchical representations (〖R_i〗^1) through aggregating features from genes and regions by attention, while leveraging intercellular graphs including SLG, HSG, and TSG to learn global semantic representations (〖R_i〗^2), and collaboratively integrates two representations by self-supervised learning. e Gene module utilizes a gene-centered HG to learn low-dimensional representations by combining features from cells and clusters using attention, while ensuring co-relational gene pairs are embedded adjacent to each other using contrastive learning. f Cell-cell communication module leverages attention-based heterogeneous graphs to infer ligand-receptor interaction strength (H_i) for each cell by aggregating ligand information from the neighbors for a central cell, while guaranteeing that CCC patterns can characterize diverse cell-states within TME. Note that each graph indicates one LRP. g The unified framework with three modules (d-f) can be used to dissect tumor ecosystems by detecting spatial clusters and visualizing them, identifying cell-state-specific gene-modules and receptor-gene interaction networks, and inferring cellular communication strength.
 
+
 # Installation
 
 ## Install stKeep
@@ -14,7 +15,6 @@ Installation was tested on Red Hat 7.6 with Python 3.6.12 and torch 1.6.0 on a m
 
 ```
 git clone https://github.com/cmzuo11/stKeep.git
-
 cd stKeep
 ```
 
@@ -26,21 +26,17 @@ cd stKeep
 
 ```
 conda create -n stKeep python=3.6.12 pip
-
 source activate
-
 conda activate stKeep
-
 pip install -r used_package.txt
 ```
 
 ## Install R packages 
 
 * Install tested on R =4.0.0
-
 * Install package 'Seurat' based on the Github https://github.com/satijalab/seurat
-
 * install.packages("ggplot2")
+
 
 # Quick start
 
@@ -78,64 +74,62 @@ Note: To reduce your waiting time, we have uploaded the tissue_hires_image.json 
 This function automatically calculates input data for the cell module, including the relations between cells and genes, the links between cells and annotated regions, 50-dimensional representations from highly variable genes, physical spatial location, 2048-dimensional visual features from histological data, and cell positive pairs.
 
 ```
-python Preprocess_Cell_module.py --basePath ./test_data/DLPFC_151507/ 
+python Preprocess_Cell_module.py --basePath ./test_data/DLPFC_151507/
 ```
+The running time mainly depends on the iteration of the histological image extraction model. It takes ~3h to generate the above-described files. You can modify the following parameters to reduce time:
 
-The running time mainly depends on the iteration of SimCLR training. It takes 3.7h to generate the above-described files. You can modify the following parameters to reduce time:
+* batch_size_I: defines the batch size for training histological image extraction model. The default value is 256. You can modify it based on your memory size. The larger the parameter, the less time.
 
-* batch_size_I: defines the batch size for training SimCLR model. The default value is 128. You can modify it based on your memory size. The larger the parameter, the less time.
-
-* max_epoch_I: defines the max iteration for training SimCLR model. The default value is 500. You can modify it. The smaller the parameter, the less time.
-
-To reproduce the result, you should use the default parameters.
+* max_epoch_I: defines the max iteration for training histological image extraction model. The default value is 500. You can modify it. The smaller the parameter, the less time.
 
 #### Learn cell representations by cell module
 
-This function automatically learns cell-module representations by heterogeneous graph learning. It takes ~6 mins for DLPFC_151507 and ~9 mins for IDC.
+This function automatically learns cell-module representations by heterogeneous graph learning. It takes ~6 mins for DLPFC_151507.
 
 ```
 python Cell_module.py --basePath ./test_data/DLPFC_151507/
 ```
 In running, the useful parameters:
 
-* lr: defines learning rate parameters for learning cell representations. The default value is 0.002.
+* lr: defines learning rate parameters for learning cell representations. The default value is 0.02.
 
 * lam: defines the importance of the two types of representations (i.e., hierarchical and Semantic). The default value is 0.1. You can adjust it from 0.1 to 0.3 by 0.05;
 
-Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
+To reproduce the result, you should use the default parameters. To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
 
 #### Output file
 
-* Semantic_representations.txt: Semantic representations.
+* Semantic_representations.txt: Semantic representations for cells.
   
-* Hierarchical_representations.txt: Hierarchical representations.
+* Hierarchical_representations.txt: Hierarchical representations for cells.
 
 
 ### Step 3. Run gene module
 
 #### Calculate the input data for the gene module
 
-This function automatically calculates input data for the gene module, including the relations between genes and cells, the links between genes and clusters (or cell-states), and gene-positive pairs.
+This function automatically calculates input data for the gene module, including the relations between genes and cells, the links between genes and clusters (or cell states), and gene-positive pairs.
 
 ```
-python Preprocess_Gene_module.py --basePath ./test_data/DLPFC_151507/ 
+python Preprocess_Gene_module.py --basePath ./test_data/DLPFC_151507/
 ```
 
-It takes 3.7h to generate the above-described files. You can modify the following parameters to reduce time:
-
-* batch_size_I: defines the batch size for training SimCLR model. The default value is 128. You can modify it based on your memory size. The larger the parameter, the less time.
-
-* max_epoch_I: defines the max iteration for training SimCLR model. The default value is 500. You can modify it. The smaller the parameter, the less time.
+It takes ~6 mins to generate the above-described files. 
 
 #### Learn gene representations by gene module
 
-This function automatically learns gene-module representations by heterogeneous graph learning. It takes ~1 min for DLPFC_151507 and ~9 mins for IDC.
+This function automatically learns gene-module representations by heterogeneous graph learning. It takes ~1 min for DLPFC_151507.
 
 ```
 python Gene_module.py --basePath ./test_data/DLPFC_151507/
 ```
+
 In running, the useful parameters:
 
+* lr: defines learning rate parameters for learning gene representations. The default value is 0.02.
+
+* attn_drop: defines the dropout rate for the attention. The default value is 0.1. You can adjust it from 0.1 to 0.3 by 0.05;
+  
 Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
 
 #### Output file
@@ -157,10 +151,12 @@ This function loads 4,257 unique ligand-receptor pairs, selects expressed ligand
 
 #### Learn ligand-receptor interaction strengths through the CCC module
 
-This function automatically learns gene-module representations by heterogeneous graph learning. It takes ~30 min for DLPFC_151507.
+This function automatically learns LRP interaction strength by the CCC module. It takes ~30 min for DLPFC_151507.
+
 ```
 python CCC_module.py --basePath ./test_data/DLPFC_151507/
 ```
+
 In running, the useful parameters:
 
 * lr_cci: defines learning rate parameters. The default value of the three parameters is 0.002. You can adjust them from 0.001 to 0.003 by 0.001;
@@ -172,7 +168,9 @@ Note: To reduce your waiting time, we have uploaded our preprocessed data into t
 #### Output file
 
 * CCC_module_LRP_strength.txt: inferred CCC interaction strength for cells.
+
 * Denosied_normalized_expression.txt: Denosied and normalized gene expression data.
+  
 
 ## Further analysis
 
@@ -198,13 +196,12 @@ Cell_obj       = Cell_modules(basePath, cbind(MP_rep, SC_rep), 10, 7, basePath, 
 gene_rep     = as.matrix(read.table( paste0(basePath, "stKeep/Gene_module_representation.txt"), header = T, row.names = 1))
 Gene_obj     = Gene_modules(Cell_obj, gene_rep, 7, basePath, "stKeep/stKeep_gene_clustering.pdf"  )
 Molecular_network(Cell_obj, basePath, "stKeep/stKeep_molecular_network.pdf"  )
-
 ```
 
 * CCC_modules: identification of CCC patterns from CCC-modules
   
 ```
-#Generate cluster-specific gene-gene interactions.
+#Generate cluster-specific CCC patterns.
 input_features = as.matrix(robust_rep[match(colnames(Seurat_obj), row.names(robust_rep)),])
 Seurat_obj     = FindVariableFeatures(Seurat_obj, nfeatures=2000)
 hvg            = VariableFeatures(Seurat_obj)
