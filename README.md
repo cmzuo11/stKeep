@@ -159,7 +159,7 @@ In running, the useful parameters:
 
 * lr_cci: defines learning rate parameters. The default value of the three parameters is 0.001;
 
-* tau: defines denotes the temperature parameter. The default value is 0.5.
+* tau: defines denotes the temperature parameter. The default value is 0.05.
 
 #### Output file
 
