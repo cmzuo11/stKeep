@@ -187,7 +187,7 @@ def Trian_CCC_model( args):
 				print( str(epoch) + " cost: " + str(cost.data.cpu()) )
 
 		if (epoch>50) and (len(train_loss_list) >= 2) :
-			if (abs(train_loss_list[-1] - train_loss_list[-2]) / train_loss_list[-2])  <= 0.003 :
+			if (abs(train_loss_list[-1] - train_loss_list[-2]) / train_loss_list[-2])  <= 0.005:
 				print( abs(train_loss_list[-1] - train_loss_list[-2]) / train_loss_list[-2] )
 				print( str(train_loss_list[-1])+ " " + str(train_loss_list[-2]) + " converged!!!" )
 				print( epoch )
@@ -205,7 +205,7 @@ def Trian_CCC_model( args):
 
 	LR_activity  = model.return_LRP_strength(nei_adj, spots_ligand, spots_recep)
 
-	pd.DataFrame(data=LR_activity.data.cpu().numpy(), index = cellName.tolist(), columns = LRP_name.tolist() ).to_csv( args.outPath + 'CCC_module_LRP_strength.txt' , sep='\t')
+	pd.DataFrame(data=LR_activity.data.cpu().numpy(), index = cellName.tolist(), columns = LRP_name.tolist() ).to_csv( args.outPath + 'CCC_module_LRP_strength.txt', sep='\t')
 
 
 def RNA_encoding_train(args, adata = None, test_size_prop = 0.1):
@@ -253,3 +253,4 @@ def RNA_encoding_train(args, adata = None, test_size_prop = 0.1):
 
 	#torch.save(model, args.outPath + '/Cell_encoding_AE_model.pt')
 	pd.DataFrame( latent_z, index= adata.obs_names ).to_csv( args.outPath + '/Cell_encoding_AE.txt', sep='\t'  ) 
+
