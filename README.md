@@ -46,6 +46,7 @@ pip install -r used_package.txt
 
 * Take slice 151507 as an example, you can find it in the test_data.
 
+  
 ## Run
 
 ### Step 1. Region annotation (for tumor samples)
@@ -65,6 +66,7 @@ You can adapt two different methods to define pathological regions, i.e., tumor 
 ```
 python Image_cell_segmentation.py --inputPath ./test_data/IDC/ --jsonFile tissue_hires_image.json
 ```
+
 
 ### Step 2. Run cell module
 
@@ -127,8 +129,6 @@ In running, the useful parameters:
 
 * attn_drop: defines the dropout rate for the attention. The default value is 0.2. You can adjust it from 0.2 to 0.3 by 0.1;
   
-Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
-
 #### Output file
 
 * Gene_module_representation.txt: gene representations for identifying gene-modules.
