@@ -61,10 +61,11 @@ knn_smoothing <- function(mat, k, latent_matrix, seed=42){
   return(S)
 }
 
-Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_data = "./utilities/Uninon_Ligand_receptors.RData", 
-                                 Cellobj_data = "./test_data/DLPFC_151507/151507_100.RData"){
+Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_data = "./utilities/Uninon_Ligand_receptors.RData"){
   load(LRP_data)
-  load(Cellobj_data)
+  idc             = Load10X_Spatial(data.dir= basePath )
+  anno            = read.table(paste0(basePath,"151507_annotation.txt"), header = T, row.names = 1 )
+  idc$Annotation  = anno$Layer[match(colnames(idc), row.names(anno))]
   match_int       = which(!is.na(idc$Annotation))
   spot_d          = colnames(idc)[match_int]
   sub_idc         = subset(idc, cells = spot_d)
@@ -109,8 +110,6 @@ Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_dat
   write.table(liagand_exps_n, file = paste0(basePath, "stKeep/ligands_expression.txt"), sep = "\t", quote = F)
   write.table(recep_exps_n, file = paste0(basePath, "stKeep/receptors_expression.txt"), sep = "\t", quote = F)
 }
-
-
 
 Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, pdf_file = NULL ){
   idc = Load10X_Spatial(data.dir= basePath )
