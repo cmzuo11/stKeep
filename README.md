@@ -71,7 +71,7 @@ python Image_cell_segmentation.py --basePath ./test_data/IDC/ --jsonFile tissue_
 ```
 Note: To reduce your waiting time, we have uploaded the tissue_hires_image.json and the processed result from step 1 into a folder named IDC. 
 
-### Run cell module
+### Step 2. Run cell module
 
 #### Calculate the input data for the cell module
 
@@ -89,8 +89,6 @@ The running time mainly depends on the iteration of SimCLR training. It takes 3.
 
 To reproduce the result, you should use the default parameters.
 
-Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
-
 #### Learn cell representations by cell module
 
 This function automatically learns cell-module representations by heterogeneous graph learning. It takes ~6 mins for DLPFC_151507 and ~9 mins for IDC.
@@ -100,39 +98,34 @@ python Cell_module.py --basePath ./test_data/DLPFC_151507/
 ```
 In running, the useful parameters:
 
-* lr_T1 for HSG, lr_T2 for SLG, lr_T3 for collaborative learning: defines learning rate parameters for learning view-specific representations by single-view graph and robust representations by multi-view graph. i.e., . The default value of the three parameters is 0.002. You can adjust them from 0.001 to 0.003 by 0.001;
+* lr: defines learning rate parameters for learning cell representations. The default value is 0.002.
 
-* max_epoch_T: defines the max iteration for training view-specific graph or multi-view graphs. The default value is 500. You can modify it. The larger the parameter, the more time.
+* lam: defines the importance of the two types of representations (i.e., hierarchical and Semantic). The default value is 0.1. You can adjust it from 0.1 to 0.3 by 0.05;
 
-* beta_pa: defines the penalty for the knowledge transfer from robust representations to view-specific representations. The default value is 8.
+Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
 
-* knn: defines the K-nearest similarity spots for each spot to construct HSG or SLG. The default value is 7 where the K-nearest spots for a spot include itself.
+#### Output file
 
-* latent_T1 and latent_T2 define the dimension of two layers of GAT for SGATE model. Here, the default value of the DLPFC and IDC datasets is 25 and 10, 32 and 16, respectively.
+* Semantic_representations.txt: Semantic representations.
+  
+* Hierarchical_representations.txt: Hierarchical representations.
 
-* fusion_type: definies the multi-view graph fusion types.
 
-To reproduce the result, you should use the default parameters.
-
-### Run gene module
+### Step 3. Run gene module
 
 #### Calculate the input data for the gene module
 
-This function automatically calculates input data for the cell module, including the gene module, including the relations between genes and cells, the links between genes and clusters (or cell-states), and gene-positive pairs.
+This function automatically calculates input data for the gene module, including the relations between genes and cells, the links between genes and clusters (or cell-states), and gene-positive pairs.
 
 ```
 python Preprocess_Gene_module.py --basePath ./test_data/DLPFC_151507/ 
 ```
 
-The running time mainly depends on the iteration of SimCLR training. It takes 3.7h to generate the above-described files. You can modify the following parameters to reduce time:
+It takes 3.7h to generate the above-described files. You can modify the following parameters to reduce time:
 
 * batch_size_I: defines the batch size for training SimCLR model. The default value is 128. You can modify it based on your memory size. The larger the parameter, the less time.
 
 * max_epoch_I: defines the max iteration for training SimCLR model. The default value is 500. You can modify it. The smaller the parameter, the less time.
-
-To reproduce the result, you should use the default parameters.
-
-Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
 
 #### Learn gene representations by gene module
 
@@ -143,22 +136,14 @@ python Gene_module.py --basePath ./test_data/DLPFC_151507/
 ```
 In running, the useful parameters:
 
-* lr_T1 for HSG, lr_T2 for SLG, lr_T3 for collaborative learning: defines learning rate parameters for learning view-specific representations by single-view graph and robust representations by multi-view graph. i.e., . The default value of the three parameters is 0.002. You can adjust them from 0.001 to 0.003 by 0.001;
+Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
 
-* max_epoch_T: defines the max iteration for training view-specific graph or multi-view graphs. The default value is 500. You can modify it. The larger the parameter, the more time.
+#### Output file
 
-* beta_pa: defines the penalty for the knowledge transfer from robust representations to view-specific representations. The default value is 8.
-
-* knn: defines the K-nearest similarity spots for each spot to construct HSG or SLG. The default value is 7 where the K-nearest spots for a spot include itself.
-
-* latent_T1 and latent_T2 define the dimension of two layers of GAT for SGATE model. Here, the default value of the DLPFC and IDC datasets is 25 and 10, 32 and 16, respectively.
-
-* fusion_type: definies the multi-view graph fusion types.
-
-To reproduce the result, you should use the default parameters.
+* Gene_module_representation.txt: gene representations for identifying gene-modules.
 
 
-### Run cell-cell communication module
+### Step 4. Run cell-cell communication module
 
 #### Calculate the input data for the CCC module
 
@@ -168,63 +153,58 @@ This function automatically calculates input data for the CCC module, including 
 python Preprocess_CCC_module.py --basePath ./test_data/DLPFC_151507/ 
 ```
 
-The running time mainly depends on the iteration of SimCLR training. It takes ~3 mins to generate the above-described files.
+This function loads 4,257 unique ligand-receptor pairs, selects expressed ligands and receptors for further analysis, utilizes knn_smoothing method to denoise gene expression data, and applies the denoised and normalized data for inferring CCC through the CCC model. It takes ~3 mins to generate the above-described files. 
 
-To reproduce the result, you should use the default parameters.
+#### Learn ligand-receptor interaction strengths through the CCC module
 
-Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
-
-#### Learn ligand-receptor interaction strengths by CCC module
-
-This function automatically learns gene-module representations by heterogeneous graph learning. It takes ~1 min for DLPFC_151507 and ~9 mins for IDC.
-
+This function automatically learns gene-module representations by heterogeneous graph learning. It takes ~30 min for DLPFC_151507.
 ```
 python CCC_module.py --basePath ./test_data/DLPFC_151507/
 ```
 In running, the useful parameters:
 
-* lr_T1 for HSG, lr_T2 for SLG, lr_T3 for collaborative learning: defines learning rate parameters for learning view-specific representations by single-view graph and robust representations by multi-view graph. i.e., . The default value of the three parameters is 0.002. You can adjust them from 0.001 to 0.003 by 0.001;
+* lr_cci: defines learning rate parameters. The default value of the three parameters is 0.002. You can adjust them from 0.001 to 0.003 by 0.001;
 
-* max_epoch_T: defines the max iteration for training view-specific graph or multi-view graphs. The default value is 500. You can modify it. The larger the parameter, the more time.
+* tau: defines denotes the temperature parameter. The default value is 500. You can modify it. The larger the parameter, the more time.
 
-* beta_pa: defines the penalty for the knowledge transfer from robust representations to view-specific representations. The default value is 8.
+Note: To reduce your waiting time, we have uploaded our preprocessed data into the folder ./test_data/DLPFC_151507/stKeep/. 
 
-* knn: defines the K-nearest similarity spots for each spot to construct HSG or SLG. The default value is 7 where the K-nearest spots for a spot include itself.
+#### Output file
 
-* latent_T1 and latent_T2 define the dimension of two layers of GAT for SGATE model. Here, the default value of the DLPFC and IDC datasets is 25 and 10, 32 and 16, respectively.
-
-* fusion_type: definies the multi-view graph fusion types.
-
-To reproduce the result, you should use the default parameters.
-
-## Output
-
-## Output file will be saved for further analysis:
-
-* GAT_2-view_model.pth: a saved model for reproducing results.
-
-* GAT_2-view_robust_representation.csv: robust representations for latter clustering, visualization, and data denoising.
+* CCC_module_LRP_strength.txt: inferred CCC interaction strength for cells.
+* Denosied_normalized_expression.txt: Denosied and normalized gene expression data.
 
 ## Further analysis
 
-Some functions from R file named Postprocessing.R (in the stKeep folder) are based on the file named GAT_2-view_robust_representation.csv for further analysis.
+Some functions from the R file named Processing.R (in the stKeep folder) are based on the output files by cell module, gene module, and CCC module for further analysis.
 
-* Seurat_processing: clustering, visualization, and differential analysis by Seurat package.
+* Cell_modules: clustering and visualization for cell-modules by Seurat package.
 
 ```
-#Generate pdf file includes clustering and visualization 
+#Generate pdf file including clustering and visualization 
 library('Seurat')
 library('ggplot2')
-source(./stKeep/Postprocessing.R)
-basePath       = "./stKeep_test_data/DLPFC_151507/"
-robust_rep     = read.csv( paste0(basePath, "stKeep/Cell_model_representation.csv"), header = T, row.names = 1)
-Seurat_obj     = Seurat_processing(basePath, robust_rep, 10, 7, basePath, "stKeep/stKeep_cell_clustering.pdf" )
+source(./stKeep/Processing.R)
+basePath       = "./test_data/DLPFC_151507/"
+MP_rep         = as.matrix(read.table( paste0(basePath, "stKeep/Semantic_representations.txt"), header = T, row.names = 1))
+SC_rep         = as.matrix(read.table( paste0(basePath, "stKeep/Hierarchical_representations.txt"), header = T, row.names = 1))
+Cell_obj       = Cell_modules(basePath, cbind(MP_rep, SC_rep), 10, 7, basePath, "stKeep/stKeep_cell_clustering.pdf" )
 ```
 
-* knn_smoothing: data denoising by its three nearest neighboring spots that are calculated based on the distance of robust representations between any two spots.
+* Gene_modules: identification of gene-gene relations from gene-modules; and Molecular_network: for visualization of gene-gene relations for each cluster.
 
 ```
-#data denoising based on three nearest neighboring spots
+#Generate cluster-specific gene-gene interactions.
+gene_rep     = as.matrix(read.table( paste0(basePath, "stKeep/Gene_module_representation.txt"), header = T, row.names = 1))
+Gene_obj     = Gene_modules(Cell_obj, gene_rep, 7, basePath, "stKeep/stKeep_gene_clustering.pdf"  )
+Molecular_network(Cell_obj, basePath, "stKeep/stKeep_molecular_network.pdf"  )
+
+```
+
+* CCC_modules: identification of CCC patterns from CCC-modules
+  
+```
+#Generate cluster-specific gene-gene interactions.
 input_features = as.matrix(robust_rep[match(colnames(Seurat_obj), row.names(robust_rep)),])
 Seurat_obj     = FindVariableFeatures(Seurat_obj, nfeatures=2000)
 hvg            = VariableFeatures(Seurat_obj)
@@ -234,15 +214,10 @@ hvg_data       = rna_data[match(hvg, row.names(rna_data)), ]
 mat_smooth     = knn_smoothing( hvg_data, 3, input_features )
 colnames(mat_smooth) = colnames(Seurat_obj)
 
-#find spatially variable genes
-Seurat_smooth         = CreateSeuratObject(counts=mat_smooth, assay='Spatial')
-Idents(Seurat_smooth) = Idents(Seurat_obj)
-
-Seurat_smooth = SCTransform(Seurat_smooth, assay = "Spatial", verbose = FALSE)
-top_markers   = FindAllMarkers(Seurat_smooth, assay='SCT', slot='data', only.pos=TRUE) 
 ```
 
 * ......
+
 
 # References
 
@@ -253,6 +228,7 @@ top_markers   = FindAllMarkers(Seurat_smooth, assay='SCT', slot='data', only.pos
 * stLearn: https://github.com/BiomedicalMachineLearning/stLearn
 
 * KNN_smoothing: https://github.com/yanailab/knn-smoothing
+  
 
 # Citation
 
