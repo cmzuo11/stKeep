@@ -91,7 +91,7 @@ def parameter_setting():
 	parser.add_argument('--lr_AET_F', type=float, default = 8e-06, help='final learning rate for transcriptomics data for AE model')
 	parser.add_argument('--max_epoch_T', '-meT', type=int, default=1000, help='Max epoches for transcriptomics data')
 
-	parser.add_argument('--batch_size_I', '-bI', type=int, default=256, help='Batch size for spot image data')
+	parser.add_argument('--batch_size_I', '-bI', type=int, default=128, help='Batch size for spot image data')
 	parser.add_argument('--image_size', '-iS', type=int, default=32, help='image size for spot image data')
 	parser.add_argument('--max_epoch_I', '-meI', type=int, default=500, help='Max epoches for spot image data')
 	parser.add_argument('--latent_I', '-lI',type=int, default=128, help='Feature dim for latent vector for spot image data')
