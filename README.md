@@ -79,7 +79,7 @@ python Preprocess_Cell_module.py --inputPath ./test_data/DLPFC_151507/
 ```
 The running time mainly depends on the iteration of the histological image extraction model. It takes ~3h to generate the above-described files. You can modify the following parameters to reduce time:
 
-* batch_size_I: defines the batch size for training histological image extraction model. The default value is 256. You can modify it based on your memory size. The larger the parameter, the less time.
+* batch_size_I: defines the batch size for training histological image extraction model. The default value is 128. You can modify it based on your memory size. The larger the parameter, the less time.
 
 * max_epoch_I: defines the max iteration for training histological image extraction model. The default value is 500. You can modify it. The smaller the parameter, the less time.
 
@@ -182,7 +182,7 @@ source("./stKeep/Processing.R")
 basePath       = "./test_data/DLPFC_151507/"
 MP_rep         = as.matrix(read.table( paste0(basePath, "stKeep/Semantic_representations.txt"), header = T, row.names = 1))
 SC_rep         = as.matrix(read.table( paste0(basePath, "stKeep/Hierarchical_representations.txt"), header = T, row.names = 1))
-Cell_obj       = Cell_modules(basePath, cbind(MP_rep, SC_rep), 10, 7, basePath, "stKeep/stKeep_cell_clustering.pdf" )
+Cell_obj       = Cell_modules(basePath, cbind(MP_rep, SC_rep), 7, basePath, "stKeep/stKeep_cell_clustering.pdf" )
 ```
 
 * Gene_modules: identification of gene-gene relations from gene-modules; and Molecular_network: for visualization of gene-gene relations for each cluster.
