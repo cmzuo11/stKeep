@@ -132,7 +132,7 @@ Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, p
   
   Cell_obj = RunUMAP(Cell_obj, reduction = "pca", dims = 1:dim(in_feas)[2])
   pdf( paste0( save_path, pdf_file ), width = 10, height = 10)
-  p1  = DimPlot(Cell_obj, reduction = "umap", label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
+  p1  = DimPlot(Cell_obj, reduction = "umap_rna", label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
         theme(legend.position = "none",legend.title = element_blank())+ggtitle("")
   print(p1)
   p2  = SpatialDimPlot(Cell_obj, label = T, label.size = 3, cols = plot_colors)+
@@ -173,7 +173,7 @@ Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf
   row.names(df_info) = colnames(Gene_obj)
   
   pdf( paste0( save_path, pdf_file ), width = 10, height = 10)
-  p1 = DimPlot(Gene_obj, reduction = "umap", label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
+  p1 = DimPlot(Gene_obj, reduction = "umap_rna", label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
        theme(legend.position = "none",legend.title = element_blank())+ggtitle("")
   plot(p1)
   p2 = ggplot(df_info) +
