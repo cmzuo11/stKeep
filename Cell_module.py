@@ -28,10 +28,7 @@ def train_with_argas( args ):
 	torch.cuda.manual_seed( args.seed )
 
 	start = time.time()
-
-	args.inputPath       = '/sibcb2/chenluonanlab7/cmzuo/workPath/CMSSL/spatial_result/DLPFC/151507/'
 	args.outPath         = args.inputPath + 'stKeep/'
-
 	args.use_cuda        = args.use_cuda and torch.cuda.is_available()
 
 	args.spotGene        = args.outPath + args.spotGene
