@@ -92,7 +92,7 @@ Note: To reduce your waiting time, we have uploaded our histological features in
 This function automatically learns cell-module representations by heterogeneous graph learning. It takes ~6 mins for DLPFC_151507.
 
 ```
-python Cell_module.py --inputPath ./test_data/DLPFC_151507/
+python Cell_model.py --inputPath ./test_data/DLPFC_151507/
 ```
 In running, the useful parameters:
 
@@ -126,7 +126,7 @@ python Preprocess_Gene_module.py --inputPath ./test_data/DLPFC_151507/
 This function automatically learns gene-module representations by heterogeneous graph learning. It takes ~1 min for DLPFC_151507.
 
 ```
-python Gene_module.py --inputPath ./test_data/DLPFC_151507/
+python Gene_model.py --inputPath ./test_data/DLPFC_151507/
 ```
 
 In running, the useful parameters:
@@ -158,7 +158,7 @@ This function loads 4,257 unique ligand-receptor pairs, selects expressed ligand
 This function automatically learns LRP interaction strength by the CCC module. It takes ~20 min for DLPFC_151507.
 
 ```
-python CCC_module.py --inputPath ./test_data/DLPFC_151507/
+python CCC_model.py --inputPath ./test_data/DLPFC_151507/
 ```
 
 In running, the useful parameters:
