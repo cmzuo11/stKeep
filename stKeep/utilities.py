@@ -32,6 +32,7 @@ def parameter_setting():
 
 	parser.add_argument('--inputPath',   '-IP', type = str, default = './test_data/DLPFC_151507/',    help='data directory')	
 	parser.add_argument('--outPath', '-od', type=str, default = './test_data/DLPFC_151507/stKeep/', help='Output path')
+	parser.add_argument('--utilitePath',   '-uP', type = str, default = './utilities/',    help='data directory')	
 
 	parser.add_argument('--spotGene',   '-sGene', type = str, default = 'Spot_gene_neighbors.txt',    help='gene neighbors for each spot')	
 	parser.add_argument('--spotGroup', '-sGroup', type=str, default = 'Spot_groups.txt', help='group neighbors for each spot')
@@ -90,7 +91,7 @@ def parameter_setting():
 	parser.add_argument('--lr_AET_F', type=float, default = 8e-06, help='final learning rate for transcriptomics data for AE model')
 	parser.add_argument('--max_epoch_T', '-meT', type=int, default=1000, help='Max epoches for transcriptomics data')
 
-	parser.add_argument('--batch_size_I', '-bI', type=int, default=128, help='Batch size for spot image data')
+	parser.add_argument('--batch_size_I', '-bI', type=int, default=256, help='Batch size for spot image data')
 	parser.add_argument('--image_size', '-iS', type=int, default=32, help='image size for spot image data')
 	parser.add_argument('--max_epoch_I', '-meI', type=int, default=500, help='Max epoches for spot image data')
 	parser.add_argument('--latent_I', '-lI',type=int, default=128, help='Feature dim for latent vector for spot image data')
@@ -395,8 +396,8 @@ def get_gene_pairs(adata, args):
 	exp_data_n  = np.zeros( (exp_data.shape[0], exp_data.shape[1]) )
 	exp_data_n[ np.where(exp_data > 0) ] = 1
 
-	GRN  = pd.read_table(args.inputPath + args.GRN_file, header=None, index_col=None).values
-	PPI  = pd.read_table(args.inputPath + args.PPI_file, header=None, index_col=None).values
+	GRN  = pd.read_table(args.utilitePath + args.GRN_file, header=None, index_col=None).values
+	PPI  = pd.read_table(args.utilitePath + args.PPI_file, header=None, index_col=None).values
 
 	matrix_count  = exp_data_n.T.dot(exp_data_n)
 	gene_pos_pair = np.eye( exp_data.shape[1], dtype=int )
