@@ -111,6 +111,7 @@ Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_dat
   write.table(recep_exps_n[match(row.names(spot_locs), row.names(recep_exps_n)),], file = paste0(basePath, "stKeep/receptors_expression.txt"), sep = "\t", quote = F)
 }
 
+
 Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, pdf_file = NULL ){
   idc = Load10X_Spatial(data.dir= basePath )
   idc = SCTransform(idc, assay = "Spatial", verbose = FALSE)
@@ -132,7 +133,7 @@ Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, p
   
   Cell_obj = RunUMAP(Cell_obj, reduction = "pca", dims = 1:dim(in_feas)[2])
   pdf( paste0( save_path, pdf_file ), width = 10, height = 10)
-  p1  = DimPlot(Cell_obj, reduction = "umap_rna", label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
+  p1  = DimPlot(Cell_obj,  label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
         theme(legend.position = "none",legend.title = element_blank())+ggtitle("")
   print(p1)
   p2  = SpatialDimPlot(Cell_obj, label = T, label.size = 3, cols = plot_colors)+
@@ -163,8 +164,8 @@ Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf
       break
     }
   }
-  Gene_obj = RunUMAP(Gene_obj, reduction = "pca", dims = 1:dim(Gene_rep)[2], verbose = FALSE, reduction.name = "umap_rna" )
-  umap_emd = as.matrix(Gene_obj@reductions$umap_rna@cell.embeddings)
+  Gene_obj = RunUMAP(Gene_obj, reduction = "pca", dims = 1:dim(Gene_rep)[2], verbose = FALSE )
+  umap_emd = as.matrix(Gene_obj@reductions$umap@cell.embeddings)
   labe_not = rep(FALSE, dim(Gene_obj)[2])
   labe_not[match(inter_genes, colnames(Gene_obj))] = T
   color_not = rep(FALSE, dim(Gene_obj)[2])
@@ -173,7 +174,7 @@ Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf
   row.names(df_info) = colnames(Gene_obj)
   
   pdf( paste0( save_path, pdf_file ), width = 10, height = 10)
-  p1 = DimPlot(Gene_obj, reduction = "umap_rna", label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
+  p1 = DimPlot(Gene_obj, reduction = "umap", label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
        theme(legend.position = "none",legend.title = element_blank())+ggtitle("")
   plot(p1)
   p2 = ggplot(df_info) +
@@ -220,7 +221,7 @@ Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
     {
       unique_genes = unique(c(from_list,to_list))
       tf_types     = rep(0, length(unique_genes))
-      tf_types[match(intersect(gr_matrix[[1]],unique_genes), unique_genes)] = 1
+      tf_types[match(intersect(gr_network[[1]],unique_genes), unique_genes)] = 1
       
       actors    = data.frame(name=unique_genes, TF  = tf_types)
       relations = data.frame(from=from_list,  to=to_list)
