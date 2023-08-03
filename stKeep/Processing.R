@@ -92,16 +92,16 @@ Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_dat
   }
   LR_pair = paste(used_li, "->", used_re, sep="")
   uniq_LR = unique(LR_pair)
-  used_ligands   = used_receptors = NULL
+  used_ligands = used_receptors = NULL
   for(m in 1:length(uniq_LR))
   {
     temps          = unlist(strsplit(uniq_LR[m], "[->]"))
     used_ligands   = c(used_ligands, temps[1])
-    used_receptors = c(used_receptors, temps[2])
+    used_receptors = c(used_receptors, temps[3])
   }
-  data         = as.matrix(sub_idc@assays$SCT@data)
-  liagand_exps = t(data[match(used_ligands, row.names(data)),])
-  recep_exps   = t(data[match(used_receptors, row.names(data)),])
+  data           = as.matrix(sub_idc@assays$SCT@data)
+  liagand_exps   = t(data[match(used_ligands, row.names(data)),])
+  recep_exps     = t(data[match(used_receptors, row.names(data)),])
   
   liagand_exps_n = apply(liagand_exps, 2, function(x){(x-min(x))/(max(x)-min(x))})
   recep_exps_n   = apply(recep_exps, 2, function(x){(x-min(x))/(max(x)-min(x))})
@@ -110,7 +110,6 @@ Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_dat
   write.table(liagand_exps_n[match(row.names(spot_locs), row.names(liagand_exps_n)),], file = paste0(basePath, "stKeep/ligands_expression.txt"), sep = "\t", quote = F)
   write.table(recep_exps_n[match(row.names(spot_locs), row.names(recep_exps_n)),], file = paste0(basePath, "stKeep/receptors_expression.txt"), sep = "\t", quote = F)
 }
-
 
 Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, pdf_file = NULL ){
   idc = Load10X_Spatial(data.dir= basePath )
@@ -121,7 +120,6 @@ Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, p
   in_feas = robust_rep[match(colnames(Cell_obj), row.names(robust_rep)),]
   Cell_obj@reductions$pca@cell.embeddings[,1:dim(in_feas)[2]] = in_feas
   Cell_obj = FindNeighbors(Cell_obj, reduction = "pca", dims = 1:dim(in_feas)[2])
-  
   for(qq in seq(0.05,1.5,0.01))
   {
     Cell_obj = FindClusters( Cell_obj, resolution = qq,  verbose = FALSE )
@@ -130,7 +128,6 @@ Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, p
       break
     }
   }
-  
   Cell_obj = RunUMAP(Cell_obj, reduction = "pca", dims = 1:dim(in_feas)[2])
   pdf( paste0( save_path, pdf_file ), width = 10, height = 10)
   p1  = DimPlot(Cell_obj,  label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
@@ -155,7 +152,6 @@ Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf
   datss       = as.matrix(Gene_obj@assays$RNA@data)
   Gene_obj@reductions$pca@cell.embeddings = Gene_rep
   Gene_obj = FindNeighbors(Gene_obj, reduction = "pca", verbose = FALSE, dims = 1:dim(Gene_rep)[2])
-  
   for(z in seq(0.01,2,0.01))
   {
     Gene_obj <- FindClusters( Gene_obj, resolution = z,  verbose = FALSE )
@@ -187,18 +183,17 @@ Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf
   return(Gene_obj)
 }
 
+
 Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
   uniqu_cl      = unique(as.character(Idents(Gene_obj)))
   gr_network    = readRDS("./utilities/gr_network.rds")
-  
   pdf(paste0( save_path, pdf_file ), width = 15, height = 15)
   for(z in 1:length(uniqu_cl))
   {
     temp_gens = colnames(Gene_obj)[which(Idents(Gene_obj)==uniqu_cl[z])]
     temp_tfs  = intersect(temp_gens, gr_network[[1]])
     temp_tgs  = intersect(temp_gens, gr_network[[2]])
-    
-    from_list = to_list= NULL
+    from_list = to_list = NULL
     for(zz in 1:length(temp_tfs))
     {
       tes       = intersect(temp_tgs, gr_network[[2]][which(gr_network[[1]]==temp_tfs[zz])])
@@ -211,7 +206,6 @@ Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
       unique_genes = unique(c(from_list,to_list))
       tf_types     = rep(0, length(unique_genes))
       tf_types[match(intersect(gr_network[[1]],unique_genes), unique_genes)] = 1
-      
       actors    = data.frame(name=unique_genes, TF  = tf_types)
       relations = data.frame(from=from_list,  to=to_list)
       g         = graph_from_data_frame(relations, directed=TRUE, vertices=actors)
@@ -225,6 +219,7 @@ Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
     }
   }
   dev.off()
+  return( list(from_list, to_list) )
 }
 
 
