@@ -191,7 +191,7 @@ Cell_obj       = Cell_modules(basePath, cbind(MP_rep, SC_rep), 7, basePath, "stK
 #Generate cluster-specific gene-gene interactions.
 gene_rep     = as.matrix(read.table( paste0(basePath, "stKeep/Gene_module_representation.txt"), header = T, row.names = 1))
 Gene_obj     = Gene_modules(Cell_obj, gene_rep, 7, basePath, "stKeep/stKeep_gene_clustering.pdf"  )
-Molecular_network(Gene_obj, basePath, "stKeep/stKeep_molecular_network.pdf"  )
+TF_TG_links  = Molecular_network(Gene_obj, basePath, "stKeep/stKeep_molecular_network.pdf"  )
 ```
 
 * CCC_modules: identification of CCC patterns from CCC-modules
