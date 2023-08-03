@@ -83,6 +83,10 @@ The running time mainly depends on the iteration of the histological image extra
 
 * max_epoch_I: defines the max iteration for training histological image extraction model. The default value is 500. You can modify it. The smaller the parameter, the less time.
 
+To reproduce the result, you should use the default parameters.
+
+Note: To reduce your waiting time, we have uploaded our histological features into the google drive at the link https://drive.google.com/drive/folders/1RTb_gHcpLhnbRMHrqn8tBtynesq5g5DI?usp=drive_link.
+
 #### Learn cell representations by cell module
 
 This function automatically learns cell-module representations by heterogeneous graph learning. It takes ~6 mins for DLPFC_151507.
