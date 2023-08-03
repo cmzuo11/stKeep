@@ -188,10 +188,8 @@ Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf
 }
 
 Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
-  uniqu_cl = unique(as.character(Idents(Gene_obj)))
-  ppi_matrix    = readRDS("./utilities/signaling_network.rds")
+  uniqu_cl      = unique(as.character(Idents(Gene_obj)))
   gr_network    = readRDS("./utilities/gr_network.rds")
-  load("./utilities/Uninon_Ligand_receptors.RData")
   
   pdf(paste0( save_path, pdf_file ), width = 15, height = 15)
   for(z in 1:length(uniqu_cl))
@@ -206,15 +204,6 @@ Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
       tes       = intersect(temp_tgs, gr_network[[2]][which(gr_network[[1]]==temp_tfs[zz])])
       from_list = c(from_list, rep(temp_tfs[zz], length(tes)))
       to_list   = c(to_list, tes)
-    }
-    
-    temp_ppis = intersect(ppi_matrix[[1]], intersect(temp_gens, uni_receptor))
-    from_ppi  = to_ppi = NULL
-    for(zz in 1:length(temp_ppis))
-    {
-      tes       = intersect(temp_gens, ppi_matrix[[2]][which(ppi_matrix[[1]]==temp_ppis[zz])])
-      from_ppi  = c(from_ppi, rep(temp_ppis[zz], length(tes)))
-      to_ppi    = c(to_ppi, tes)
     }
     
     if((length(from_list)>0)&&(length(to_list)>0))
@@ -233,24 +222,6 @@ Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
       
       plot(g, layout = coords,  vertex.label = unique_genes, vertex.shape="none",
            vertex.label.font=9, vertex.label.cex=0.8, main = paste(uniqu_cl[z], "-", "GRN", sep=""))
-    }
-    
-    if((length(from_ppi)>0)&&(length(to_ppi)>0))
-    {
-      unique_genes = unique(c(from_ppi,to_ppi))
-      tf_types     = rep(0, length(unique_genes))
-      tf_types[match(intersect(ppi_matrix[[1]], intersect(unique_genes, uni_receptor)), unique_genes)] = 1
-      
-      actors    = data.frame(name=unique_genes, TF  = tf_types)
-      relations = data.frame(from=from_ppi,  to=to_ppi)
-      g         = graph_from_data_frame(relations, directed=TRUE, vertices=actors)
-      coords    = layout_(g, in_circle())
-      
-      V(g)[V(g)$TF == 1]$label.color = "red"
-      V(g)[V(g)$TF == 0]$label.color = "blue"
-      
-      plot(g, layout = coords,  vertex.label = unique_genes, vertex.shape="none",
-           vertex.label.font=9, vertex.label.cex=0.8, main = paste(uniqu_cl[z], "-", "LR", sep=""))
     }
   }
   dev.off()
@@ -275,7 +246,6 @@ CCC_modules <- function(Cell_obj, LRP_activ, featues, save_path = NULL, pdf_file
   LR_assay = CreateAssayObject(counts = t(LRP_activity))
   Cell_obj[["LRP_activity"]] = LR_assay
   DefaultAssay(Cell_obj)     = "LRP_activity"
-  Idents(Cell_obj) = Cell_obj$Annotation
   #Diff_LRPs        = FindAllMarkers(Cell_obj, only.pos = T )
   pdf(paste0( save_path, pdf_file ), width = 10, height = 10)
   p1 = SpatialFeaturePlot(Cell_obj, features = featues, ncol = 2)
