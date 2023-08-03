@@ -115,6 +115,8 @@ To reproduce the result, you should use the default parameters.
 
 This function automatically calculates input data for the gene module, including the relations between genes and cells, the links between genes and clusters (or cell states), and gene-positive pairs. It takes ~6 mins to generate the above-described files. 
 
+Before running the following script, you should first download gene-gene interaction databases including PPI and GRN from the google drive at the link https://drive.google.com/drive/folders/1RTb_gHcpLhnbRMHrqn8tBtynesq5g5DI?usp=drive_link; and put them into utilities folder. 
+
 ```
 python Preprocess_Gene_module.py --inputPath ./test_data/DLPFC_151507/
 ```
