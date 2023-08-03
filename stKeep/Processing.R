@@ -90,14 +90,14 @@ Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_dat
       used_re = c(used_re, uni_receptor[z])
     }
   }
-  LR_pair = paste(used_li, "->", used_re, sep="")
+  LR_pair = paste(used_li, "+", used_re, sep="")
   uniq_LR = unique(LR_pair)
   used_ligands = used_receptors = NULL
   for(m in 1:length(uniq_LR))
   {
-    temps          = unlist(strsplit(uniq_LR[m], "[->]"))
+    temps          = unlist(strsplit(uniq_LR[m], "[+]"))
     used_ligands   = c(used_ligands, temps[1])
-    used_receptors = c(used_receptors, temps[3])
+    used_receptors = c(used_receptors, temps[2])
   }
   data           = as.matrix(sub_idc@assays$SCT@data)
   liagand_exps   = t(data[match(used_ligands, row.names(data)),])
@@ -106,7 +106,7 @@ Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_dat
   liagand_exps_n = apply(liagand_exps, 2, function(x){(x-min(x))/(max(x)-min(x))})
   recep_exps_n   = apply(recep_exps, 2, function(x){(x-min(x))/(max(x)-min(x))})
   
-  colnames(liagand_exps_n) = colnames(recep_exps_n) = uniq_LR
+  colnames(liagand_exps_n) = colnames(recep_exps_n) = unique(paste(used_li, "->", used_re, sep=""))
   write.table(liagand_exps_n[match(row.names(spot_locs), row.names(liagand_exps_n)),], file = paste0(basePath, "stKeep/ligands_expression.txt"), sep = "\t", quote = F)
   write.table(recep_exps_n[match(row.names(spot_locs), row.names(recep_exps_n)),], file = paste0(basePath, "stKeep/receptors_expression.txt"), sep = "\t", quote = F)
 }
@@ -185,8 +185,10 @@ Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf
 
 
 Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
-  uniqu_cl      = unique(as.character(Idents(Gene_obj)))
-  gr_network    = readRDS("./utilities/gr_network.rds")
+  uniqu_cl    = unique(as.character(Idents(Gene_obj)))
+  gr_network  = readRDS("./utilities/gr_network.rds")
+  from_TG     = to_TG  =  list()
+  
   pdf(paste0( save_path, pdf_file ), width = 15, height = 15)
   for(z in 1:length(uniqu_cl))
   {
@@ -200,7 +202,6 @@ Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
       from_list = c(from_list, rep(temp_tfs[zz], length(tes)))
       to_list   = c(to_list, tes)
     }
-    
     if((length(from_list)>0)&&(length(to_list)>0))
     {
       unique_genes = unique(c(from_list,to_list))
@@ -217,9 +218,14 @@ Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
       plot(g, layout = coords,  vertex.label = unique_genes, vertex.shape="none",
            vertex.label.font=9, vertex.label.cex=0.8, main = paste(uniqu_cl[z], "-", "GRN", sep=""))
     }
+    from_TG[[z]] = from_list
+    to_TG[[z]]   = to_list
   }
   dev.off()
-  return( list(from_list, to_list) )
+  
+  names(from_TG) = uniqu_cl
+  names(to_TG)   = uniqu_cl
+  return( list(from_TG, to_TG) )
 }
 
 
