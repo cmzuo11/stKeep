@@ -276,9 +276,9 @@ def load_data_RNA( args ):
 def load_ccc_data( args ):
 
 	print("spot location for adjancy")
-	spot_loc     = pd.read_table(args.spatialLocation, header = 0, index_col = 0).values
-	dist_loc     = pairwise_distances(spot_loc, metric = args.locMeasure)
-	
+	spot_loc     = pd.read_table(args.spatialLocation, header = 0, index_col = 0)
+	dist_loc     = pairwise_distances(spot_loc.values, metric = args.locMeasure)
+
 	sorted_knn    = dist_loc.argsort(axis=1)
 	selected_node = []
 	#used_spots    = []
@@ -293,13 +293,13 @@ def load_ccc_data( args ):
 	spots_ligand_n  = torch.FloatTensor(spots_ligand.values)
 
 	print("spot-receptor data")
-	spots_recep   = pd.read_table(args.Receptors_exp, header = 0, index_col = 0).values
-	spots_recep   = torch.FloatTensor(spots_recep)
+	spots_recep   = pd.read_table(args.Receptors_exp, header = 0, index_col = 0)
+	spots_recep_n = torch.FloatTensor(spots_recep.values)
 
 	pos   = pd.read_table(args.pos_pair, header = None, index_col = None).values
 	pos   = torch.FloatTensor(pos)
 
-	return selected_node, spots_ligand_n, spots_recep, pos, spots_ligand.index, spots_ligand.columns
+	return selected_node, spots_ligand_n, spots_recep_n, pos, spots_ligand.index, spots_ligand.columns
 
 
 def normalize( adata, filter_min_counts=True, size_factors=True, 
