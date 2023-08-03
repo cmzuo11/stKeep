@@ -30,9 +30,7 @@ def train_with_argas( args ):
 
 	start = time.time()
 
-	args.inputPath       = '/sibcb2/chenluonanlab7/cmzuo/workPath/CMSSL/spatial_result/DLPFC/151507/'
 	args.outPath         = args.inputPath + 'stKeep/'
-
 	args.use_cuda        = args.use_cuda and torch.cuda.is_available()
 
 	args.geneGroup       = args.outPath + args.geneGroup
