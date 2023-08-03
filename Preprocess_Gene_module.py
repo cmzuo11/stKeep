@@ -22,9 +22,7 @@ from stKeep.model_training import RNA_encoding_train
 def Preprocessing( args ):
 
 	start = time.time()
-	args.use_cuda       = args.use_cuda and torch.cuda.is_available()
-	args.inputPath      = '/sibcb2/chenluonanlab7/cmzuo/workPath/CMSSL/spatial_result/DLPFC/151507/'
-	
+	args.use_cuda       = args.use_cuda and torch.cuda.is_available()	
 	args.tillingPath    = Path( args.inputPath + 'tmp/' )
 	args.tillingPath.mkdir(parents=True, exist_ok=True)
 	args.outPath        = args.inputPath + 'stKeep/'
