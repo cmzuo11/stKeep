@@ -13,7 +13,7 @@ Installation was tested on Red Hat 7.6 with Python 3.8.18 and torch 1.13.0 on a 
 
 ### Install stKeep in the virtual environment by conda
 
-#### step 1: Firstly, install conda: https://docs.anaconda.com/anaconda/install/index.html, and create a envs named stKeep in python 3.8.18
+#### step 1: Firstly, install conda: https://docs.anaconda.com/anaconda/install/index.html, and then create a envs named stKeep with python 3.8.18
 
 ```
 conda create -n stKeep python=3.8.18 pip
