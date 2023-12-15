@@ -15,15 +15,7 @@ import pandas as pd
 import scanpy as sc
 import scipy.sparse as sp
 
-
-from sklearn.cluster import KMeans
-from sklearn import mixture
-from sklearn.decomposition import PCA
 from sklearn.metrics import pairwise_distances
-from sklearn import metrics
-
-from sklearn.preprocessing import MinMaxScaler, LabelEncoder, scale
-from sklearn.model_selection import train_test_split
 from scipy.spatial.distance import cosine
 
 def parameter_setting():
@@ -84,6 +76,7 @@ def parameter_setting():
 	parser.add_argument('--lr_cci', '-lr_cci', type=float, default = 0.002, help='Learning rate')
 	parser.add_argument('--l2_coef', '-l2_coef', type=float, default=0)
 	parser.add_argument('--patience', '-patience', type=int, default=30)
+	parser.add_argument('--Hismodel', '-Hismodel', type=str, default='SimCLR', help='utilize SimCLR or ResNet50 to extract visual features')
 
 	parser.add_argument('--batch_size_T', '-bT', type=int, default=128, help='Batch size for transcriptomics data')
 	parser.add_argument('--epoch_per_test', '-ept', type=int, default=5, help='Epoch per test')
