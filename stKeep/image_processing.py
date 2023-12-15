@@ -380,6 +380,68 @@ def extract_representation_simCLR_model( args, adata, sub_path = None, file_code
 	barcode     = np.concatenate(barcode)
 
 	data_frame  = pd.DataFrame(data=feature_dim, index=barcode, columns =  list(range(1, 2049)) )
-	data_frame[adata.obs_names].to_table( args.outPath + args.visualFeature )
+	data_frame.index  = data_frame.index.map(str)
+	data_frame_1      = data_frame.loc[adata.obs_names]
+	data_frame_1.to_csv( args.outPath + args.visualFeature , sep='\t')
+	
+
+class resnet50_model(Module):
+	def __init__(self):
+		super(resnet50_model, self).__init__()
+
+		### load pretrained resnet50 model
+		resnet50 = models.resnet50(pretrained=True)
+
+		for param in resnet50.parameters():
+			param.requires_grad = False
+
+		self.f = []
+
+		for name, module in resnet50.named_children():
+			if not isinstance(module, nn.Linear) and not isinstance(module, nn.MaxPool2d):
+				self.f.append(module)
+		# encoder
+		self.f = nn.Sequential(*self.f)
+
+	def forward(self, x):
+		x       = self.f(x)
+		feature = torch.flatten(x, start_dim=1)
+	   
+		return F.normalize(feature, dim=-1)
 
 
+def extract_representation_resnet50_model( args, adata, sub_path = None, file_code = None ):
+	## extract 2048 representation from pretrained resnet50
+	batch_size    = args.batch_size_I
+
+	# data prepare
+	print('step1:  ')
+	total_data    = CustomDataset(imgs_path = args.tillingPath,
+								  sub_path  = sub_path, file_code = file_code, 
+								  transform = test_transform )
+
+	total_loader  = DataLoader(total_data, batch_size=args.batch_size_I, shuffle=False, 
+							   pin_memory=True, drop_last=False)
+
+	print('step2:  ')
+	model       = resnet50_model().eval().cuda()
+	total_bar   = tqdm(total_loader)
+	feature_dim = []
+	barcode     = []
+
+	for image, _, image_code in total_bar:
+
+		image   = image.cuda(non_blocking=True)
+		feature = model(image)
+
+		feature_dim.append( feature.data.cpu().numpy() )
+		barcode.append( image_code )
+
+	feature_dim = np.concatenate(feature_dim)
+	barcode     = np.concatenate(barcode)
+
+	data_frame        = pd.DataFrame(data=feature_dim, index=barcode, columns =  list(range(1, 2049)) )
+	data_frame.index  = data_frame.index.map(str)
+	data_frame_1      = data_frame.loc[adata.obs_names]
+	data_frame_1.to_csv( args.outPath + args.visualFeature , sep='\t')
+	
