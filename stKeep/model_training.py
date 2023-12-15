@@ -22,8 +22,8 @@ from torch import optim
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-from stKeep.utilities import normalize, load_data_RNA, load_data_cell, load_ccc_data
-from stKeep.modules import Cell_module, Gene_module, CCI_model, AE
+from utilities import normalize, load_data_RNA, load_data_cell, load_ccc_data
+from modules import Cell_module, Gene_module, CCI_model, AE
 
 
 def Trian_cell_model( args):
@@ -49,7 +49,7 @@ def Trian_cell_model( args):
 
 	train_loss_list = []
 
-	for epoch in range(args.max_training):
+	for epoch in range(500):
 		model.train()
 		optim.zero_grad()
 		#print(str(epoch))
@@ -113,7 +113,7 @@ def Trian_gene_model( args ):
 
 	train_loss_list = []
 
-	for epoch in range(args.max_training):
+	for epoch in range(200):
 		model.train()
 		optim.zero_grad()
 		loss = model(feats, pos, nei_index)
@@ -171,7 +171,7 @@ def Trian_CCC_model( args):
 
 	train_loss_list = []
 
-	for epoch in range(args.max_training):
+	for epoch in range(1000):
 		model.train()
 		optim.zero_grad()
 
