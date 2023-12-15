@@ -23,7 +23,7 @@ setup(
         'seaborn',
         'matplotlib==3.7.3',
         'glob2',
-        'Pillow',
+        'Pillow==9.5.0',
         'anndata==0.9.2',
         'argparse==1.1',
         'pathlib',
