@@ -27,11 +27,10 @@ from torch.nn.modules.module import Module
 from torch.distributions import Normal, kl_divergence as kl
 from torch import optim
 
-from torchvision import models
 from torch.distributions import Normal, kl_divergence as kl
 
-from stKeep.Layers import Hierarchical_encoder, Semantic_encoder, Contrast, LRP_attention, build_multi_layers, Contrast_single, Decoder_logNorm_NB, Decoder
-from stKeep.utilities import adjust_learning_rate
+from Layers import Hierarchical_encoder, Semantic_encoder, Contrast, LRP_attention, build_multi_layers, Contrast_single, Decoder_logNorm_NB, Decoder
+from utilities import adjust_learning_rate
 
 
 class Cell_module(nn.Module):
