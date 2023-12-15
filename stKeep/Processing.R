@@ -131,10 +131,10 @@ Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, p
   Cell_obj = RunUMAP(Cell_obj, reduction = "pca", dims = 1:dim(in_feas)[2])
   pdf( paste0( save_path, pdf_file ), width = 10, height = 10)
   p1  = DimPlot(Cell_obj,  label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
-        theme(legend.position = "none",legend.title = element_blank())+ggtitle("")
+    theme(legend.position = "none",legend.title = element_blank())+ggtitle("")
   print(p1)
   p2  = SpatialDimPlot(Cell_obj, label = T, label.size = 3, cols = plot_colors)+
-        theme(legend.position = "none",legend.title = element_blank())+ggtitle("")
+    theme(legend.position = "none",legend.title = element_blank())+ggtitle("")
   print(p2)
   dev.off()
   
@@ -142,7 +142,7 @@ Cell_modules <- function(basePath, robust_rep, nCluster = 7, save_path = NULL, p
 }
 
 Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf_file = NULL ){
-  inter_genes = c("SNAP25", "MOBP", "PCP4", "FABP7", "PVALB", "CCK", "ENC1", "AQP4", "TRABD2A", "HPCAL1", "FREM3", "KRT17")
+  inter_genes = c("SNAP25", "PVALB","ENC1", "HPCAL1", "MOBP", "MBP", "CARTPT", "FABP7", "AQP4", "KRT17")
   count       = as.matrix(Cell_obj@assays$Spatial@counts)
   count_new   = t(count[match(row.names(Gene_rep), row.names(count) ),])
   Gene_obj    = CreateSeuratObject(counts = count_new)
@@ -171,12 +171,12 @@ Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf
   
   pdf( paste0( save_path, pdf_file ), width = 10, height = 10)
   p1 = DimPlot(Gene_obj, reduction = "umap", label = T, label.size = 6, pt.size=1.5, cols = plot_colors)+
-       theme(legend.position = "none",legend.title = element_blank())+ggtitle("")
+    theme(legend.position = "none",legend.title = element_blank())+ggtitle("")
   plot(p1)
   p2 = ggplot(df_info) +
-       geom_point(aes(x = umap_1, y = umap_2, col = color)) +
-       geom_text_repel(aes(x = umap_1, y = umap_2, label = ifelse(Label == T, rownames(df_info),"")),
-                       max.overlaps = Inf)
+    geom_point(aes(x = umap_1, y = umap_2, col = color)) +
+    geom_text_repel(aes(x = umap_1, y = umap_2, label = ifelse(Label == T, rownames(df_info),"")),
+                    max.overlaps = Inf)
   plot(p2)
   dev.off()
   
@@ -188,8 +188,7 @@ Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
   uniqu_cl    = unique(as.character(Idents(Gene_obj)))
   gr_network  = readRDS("./utilities/gr_network.rds")
   from_TG     = to_TG  =  list()
-  
-  pdf(paste0( save_path, pdf_file ), width = 15, height = 15)
+  pdf(paste0( save_path, pdf_file ), width = 20, height = 20)
   for(z in 1:length(uniqu_cl))
   {
     temp_gens = colnames(Gene_obj)[which(Idents(Gene_obj)==uniqu_cl[z])]
@@ -210,7 +209,7 @@ Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
       actors    = data.frame(name=unique_genes, TF  = tf_types)
       relations = data.frame(from=from_list,  to=to_list)
       g         = graph_from_data_frame(relations, directed=TRUE, vertices=actors)
-      coords    = layout_(g, in_circle())
+      coords <- layout_(g, on_sphere())
       
       V(g)[V(g)$TF == 1]$label.color = "red"
       V(g)[V(g)$TF == 0]$label.color = "blue"
