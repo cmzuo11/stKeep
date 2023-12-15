@@ -9,26 +9,32 @@ Overview of the stKeep model. a-c Given each SRT data with four-layer profiles: 
 
 ## Install stKeep
 
-Installation was tested on Red Hat 7.6 with Python 3.6.12 and torch 1.6.0 on a machine with one 40-core Intel(R) Xeon(R) Gold 5115 CPU addressing with 132GB RAM, and two NVIDIA TITAN V GPU addressing 24GB. stKeep is implemented in the Pytorch framework. Please run stKeep on CUDA if possible. 
+Installation was tested on Red Hat 7.6 with Python 3.8.18 and torch 1.13.0 on a machine with one 40-core Intel(R) Xeon(R) Gold 5115 CPU addressing with 132GB RAM, and two NVIDIA TITAN V GPUs addressing 24GB. stKeep is implemented in the Pytorch framework. Please run stKeep on CUDA if possible. 
 
-#### 1. Grab the source code of stKeep
+### Install stKeep in the virtual environment by conda
+
+#### step 1: Firstly, install conda: https://docs.anaconda.com/anaconda/install/index.html, and create a envs named stKeep in python 3.8.18
+
+```
+conda create -n stKeep python=3.8.18 pip
+conda activate stKeep
+```
+
+#### Step 2: Two methods for install it
+
+##### Method 1: automatically install stKeep from pypi website: https://pypi.org/project/stKeep/
+
+```
+pip install stKeep
+cd stKeep
+```
+
+##### Method 2: automatically install all used packages (described by "setup.py") for stKeep in a few mins.
 
 ```
 git clone https://github.com/cmzuo11/stKeep.git
 cd stKeep
-```
-
-#### 2. Install stKeep in the virtual environment by conda 
-
-* Firstly, install conda: https://docs.anaconda.com/anaconda/install/index.html
-
-* Then, automatically install all used packages (described by "used_package.txt") for stKeep in a few mins.
-
-```
-conda create -n stKeep python=3.6.12 pip
-source activate
-conda activate stKeep
-pip install -r used_package.txt
+pip install .
 ```
 
 ## Install R packages 
@@ -64,7 +70,7 @@ You can adapt two different methods to define pathological regions, i.e., tumor 
 * Define the classification for each spot based on above-generated json file. Here, we use IDC dataset as an example.
 
 ```
-python Image_cell_segmentation.py --inputPath ./test_data/IDC/ --jsonFile tissue_hires_image.json
+python ./stKeep/Image_cell_segmentation.py --inputPath ./test_data/IDC/ --jsonFile tissue_hires_image.json
 ```
 
 
@@ -72,10 +78,10 @@ python Image_cell_segmentation.py --inputPath ./test_data/IDC/ --jsonFile tissue
 
 #### Calculate the input data for the cell module
 
-This function automatically calculates input data for the cell module, including the relations between cells and genes, the links between cells and annotated regions, 50-dimensional representations from highly variable genes, physical spatial location, 2048-dimensional visual features from histological data, and cell positive pairs.
+This function automatically calculates input data for the cell module, including the relations between cells/spots and genes, the links between cells/spots and annotated regions, 50-dimensional representations from highly variable genes, physical spatial location, 2048-dimensional visual features from histological data, and cell/spot positive pairs.
 
 ```
-python Preprocess_Cell_module.py --inputPath ./test_data/DLPFC_151507/
+python ./stKeep/Preprocess_Cell_module.py --inputPath ./test_data/DLPFC_151507/
 ```
 The running time mainly depends on the iteration of the histological image extraction model. It takes ~3h to generate the above-described files. You can modify the following parameters to reduce time:
 
@@ -83,16 +89,18 @@ The running time mainly depends on the iteration of the histological image extra
 
 * max_epoch_I: defines the max iteration for training histological image extraction model. The default value is 500. You can modify it. The smaller the parameter, the less time.
 
-To reproduce the result, you should use the default parameters.
+To reproduce the result, you should use the default parameters. 
 
-Note: To reduce your waiting time, we have uploaded our histological features into the google drive at the link https://drive.google.com/drive/folders/1RTb_gHcpLhnbRMHrqn8tBtynesq5g5DI?usp=drive_link.
+Optionally, we have provided another method to extract histological features from H&E images by pretrained ResNet-50 model. You can use the parameter: --Hismodel ResNet50. It takes ~1 min
+
+Note: to reduce your waiting time, we have uploaded our histological features into the google drive at the link https://drive.google.com/drive/folders/1RTb_gHcpLhnbRMHrqn8tBtynesq5g5DI?usp=drive_link. you can downloaded it, and put them into the ./test_data/DLPFC_151507/stKeep/ folder.
 
 #### Learn cell representations by cell module
 
-This function automatically learns cell-module representations by heterogeneous graph learning. It takes ~6 mins for DLPFC_151507.
+This function automatically learns cell-module representations by heterogeneous graph learning. It takes ~5 mins for DLPFC_151507.
 
 ```
-python Cell_model.py --inputPath ./test_data/DLPFC_151507/
+python ./stKeep/Cell_model.py --inputPath ./test_data/DLPFC_151507/
 ```
 In running, the useful parameters:
 
@@ -115,10 +123,10 @@ To reproduce the result, you should use the default parameters.
 
 This function automatically calculates input data for the gene module, including the relations between genes and cells, the links between genes and clusters (or cell states), and gene-positive pairs. It takes ~6 mins to generate the above-described files. 
 
-Before running the following script, you should first download gene-gene interaction databases including PPI and GRN from the google drive at the link https://drive.google.com/drive/folders/1RTb_gHcpLhnbRMHrqn8tBtynesq5g5DI?usp=drive_link; and put them into utilities folder. 
+Before running the following script, you should first download gene-gene interaction databases including PPI (Protein_protein_interaction_network.txt) and GRN (Gene_regulatory_network.txt) from the google drive at the link https://drive.google.com/drive/folders/1RTb_gHcpLhnbRMHrqn8tBtynesq5g5DI?usp=drive_link; and put them into utilities folder. 
 
 ```
-python Preprocess_Gene_module.py --inputPath ./test_data/DLPFC_151507/
+python ./stKeep/Preprocess_Gene_module.py --inputPath ./test_data/DLPFC_151507/
 ```
 
 #### Learn gene representations by gene module
@@ -126,14 +134,14 @@ python Preprocess_Gene_module.py --inputPath ./test_data/DLPFC_151507/
 This function automatically learns gene-module representations by heterogeneous graph learning. It takes ~1 min for DLPFC_151507.
 
 ```
-python Gene_model.py --inputPath ./test_data/DLPFC_151507/
+python ./stKeep/Gene_model.py --inputPath ./test_data/DLPFC_151507/
 ```
 
 In running, the useful parameters:
 
-* lr: defines learning rate parameters for learning gene representations. The default value is 0.02.
+* lr: defines learning rate parameters for learning gene representations. The default value is 0.05.
 
-* attn_drop: defines the dropout rate for the attention. The default value is 0.2. You can adjust it from 0.2 to 0.3 by 0.1;
+* attn_drop: defines the dropout rate for the attention. The default value is 0.2.
   
 #### Output file
 
@@ -158,7 +166,7 @@ This function loads 4,257 unique ligand-receptor pairs, selects expressed ligand
 This function automatically learns LRP interaction strength by the CCC module. It takes ~20 min for DLPFC_151507.
 
 ```
-python CCC_model.py --inputPath ./test_data/DLPFC_151507/
+python ./stKeep/CCC_model.py --inputPath ./test_data/DLPFC_151507/
 ```
 
 In running, the useful parameters:
@@ -223,5 +231,3 @@ Cell_obj     = CCC_modules(Cell_obj, LR_activ, featues, basePath, "stKeep/CCC_pa
 # Citation
 
 Chunman Zuo* and Luonan Chen*. Dissecting tumor microenvironment from spatially resolved transcriptomics data by heterogeneous graph learning. 2023. (submitted).
-
-
