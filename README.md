@@ -13,23 +13,21 @@ Installation was tested on Red Hat 7.6 with Python 3.8.18 and torch 1.13.0 on a 
 
 ### Install stKeep in the virtual environment by conda
 
-#### step 1: Firstly, install conda: https://docs.anaconda.com/anaconda/install/index.html, and then create a envs named stKeep with python 3.8.18
+#### step 1: install conda: https://docs.anaconda.com/anaconda/install/index.html, and then create a envs named stKeep with python 3.8.18
 
 ```
 conda create -n stKeep python=3.8.18 pip
 conda activate stKeep
 ```
 
-#### Step 2: Two methods for install it
-
-##### Method 1: automatically install stKeep from pypi website: https://pypi.org/project/stKeep/
+#### Step 2: automatically install stKeep from pypi website: https://pypi.org/project/stKeep/
 
 ```
 pip install stKeep
 cd stKeep
 ```
 
-##### Method 2: automatically install all used packages (described by "setup.py") for stKeep in a few mins.
+#### or you can install it from Github:
 
 ```
 git clone https://github.com/cmzuo11/stKeep.git
@@ -91,9 +89,11 @@ The running time mainly depends on the iteration of the histological image extra
 
 To reproduce the result, you should use the default parameters. 
 
+Note: to reduce your waiting time, you can use the file 'Image_simCLR_reprensentation.txt' in the folder './DLPFC_151507/stKeep/'. If you can't find it, please download it from the link https://drive.google.com/drive/folders/1RTb_gHcpLhnbRMHrqn8tBtynesq5g5DI?usp=drive_link, and then put them into the './test_data/DLPFC_151507/stKeep/' folder.
+
 Optionally, we have provided another method to extract histological features from H&E images by pretrained ResNet-50 model. You can use the parameter: --Hismodel ResNet50. It takes ~1 min
 
-Note: to reduce your waiting time, we have uploaded our histological features into the google drive at the link https://drive.google.com/drive/folders/1RTb_gHcpLhnbRMHrqn8tBtynesq5g5DI?usp=drive_link. you can downloaded it, and put them into the ./test_data/DLPFC_151507/stKeep/ folder.
+
 
 #### Learn cell representations by cell module
 
@@ -123,7 +123,7 @@ To reproduce the result, you should use the default parameters.
 
 This function automatically calculates input data for the gene module, including the relations between genes and cells, the links between genes and clusters (or cell states), and gene-positive pairs. It takes ~6 mins to generate the above-described files. 
 
-Before running the following script, you should first download gene-gene interaction databases including PPI (Protein_protein_interaction_network.txt) and GRN (Gene_regulatory_network.txt) from the google drive at the link https://drive.google.com/drive/folders/1RTb_gHcpLhnbRMHrqn8tBtynesq5g5DI?usp=drive_link; and put them into utilities folder. 
+Note: please check there are 'Protein_protein_interaction_network.txt' and 'Gene_regulatory_network.txt' in the 'utilities' folder. If you can't find it, please download it from link https://drive.google.com/drive/folders/1RTb_gHcpLhnbRMHrqn8tBtynesq5g5DI?usp=drive_link; and then put them into 'utilities' folder. 
 
 ```
 python ./stKeep/Preprocess_Gene_module.py --inputPath ./test_data/DLPFC_151507/
@@ -231,3 +231,5 @@ Cell_obj     = CCC_modules(Cell_obj, LR_activ, featues, basePath, "stKeep/CCC_pa
 # Citation
 
 Chunman Zuo* and Luonan Chen*. Dissecting tumor microenvironment from spatially resolved transcriptomics data by heterogeneous graph learning. 2023. (submitted).
+
+
