@@ -26,6 +26,7 @@ conda activate stKeep
 git clone https://github.com/cmzuo11/stKeep.git
 cd stKeep
 pip install .
+cd analysis
 ```
 
 #### or automatically install stKeep from pypi website: https://pypi.org/project/stKeep/
@@ -34,7 +35,7 @@ pip install .
 pip install stKeep
 ```
 
-Noth that if you use this command, please mannually download utilities, test_data and analysis folders from the GitHub, and put them into the directory what you want, and then go to analysis folder by the command: cd analysis.
+Please mannually download utilities, test_data and analysis folders from the GitHub, and put them into the directory what you want, and then go to analysis folder by the command: cd analysis.
 
 
 ## Install R packages 
@@ -42,7 +43,8 @@ Noth that if you use this command, please mannually download utilities, test_dat
 * Install tested on R =4.0.0
 * Install package 'Seurat' based on the Github https://github.com/satijalab/seurat
 * install.packages("ggplot2")
-
+* install.packages("igraph")
+* install.packages("ggrepel")
 
 # Quick start
 
