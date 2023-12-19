@@ -29,9 +29,8 @@ from torch import optim
 
 from torch.distributions import Normal, kl_divergence as kl
 
-from Layers import Hierarchical_encoder, Semantic_encoder, Contrast, LRP_attention, build_multi_layers, Contrast_single, Decoder_logNorm_NB, Decoder
-from utilities import adjust_learning_rate
-
+from .Layers import Hierarchical_encoder, Semantic_encoder, Contrast, LRP_attention, build_multi_layers, Contrast_single, Decoder_logNorm_NB, Decoder
+from .utilities import adjust_learning_rate
 
 class Cell_module(nn.Module):
 	def __init__(self, hidden_dim, feats_dim_list, feat_drop, 
