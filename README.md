@@ -35,7 +35,10 @@ cd analysis
 pip install stKeep
 ```
 
-Please mannually download utilities, test_data and analysis folders from the GitHub, and put them into the directory what you want, and then go to analysis folder by the command: cd analysis.
+Please mannually download utilities, test_data and analysis folders from the GitHub, and put them into the directory what you want, and then go to analysis folder.
+```
+cd analysis
+```
 
 
 ## Install R packages 
