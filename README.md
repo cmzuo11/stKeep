@@ -28,7 +28,7 @@ cd stKeep
 pip install .
 ```
 
-#### automatically install stKeep from pypi website: https://pypi.org/project/stKeep/
+#### or automatically install stKeep from pypi website: https://pypi.org/project/stKeep/
 
 ```
 pip install stKeep
