@@ -12,12 +12,12 @@ from pathlib import Path
 import os
 import time
 
-from utilities import parameter_setting
+from .utilities import parameter_setting
 
 print('Start processing cell segmentation')
 
 start           =  time.time()
-parser          =  parameter_setting()
+parser          =  stKeep.parameter_setting()
 args            =  parser.parse_args()
 
 imageSeg_dir    = args.inputPath + 'image_segmentation/'
