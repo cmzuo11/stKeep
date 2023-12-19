@@ -20,20 +20,22 @@ conda create -n stKeep python=3.8.18 pip
 conda activate stKeep
 ```
 
-#### Step 2: automatically install stKeep from pypi website: https://pypi.org/project/stKeep/
-
-```
-pip install stKeep
-cd stKeep
-```
-
-#### or you can install it from Github:
+#### Step 2: install stKeep from Github:
 
 ```
 git clone https://github.com/cmzuo11/stKeep.git
 cd stKeep
 pip install .
 ```
+
+#### automatically install stKeep from pypi website: https://pypi.org/project/stKeep/
+
+```
+pip install stKeep
+```
+
+Noth that if you use this command, please mannually download utilities, test_data and analysis folders from the GitHub, and put them into the directory what you want, and then go to analysis folder by the command: cd analysis.
+
 
 ## Install R packages 
 
@@ -68,7 +70,7 @@ You can adapt two different methods to define pathological regions, i.e., tumor 
 * Define the classification for each spot based on above-generated json file. Here, we use IDC dataset as an example.
 
 ```
-python ./stKeep/Image_cell_segmentation.py --inputPath ./test_data/IDC/ --jsonFile tissue_hires_image.json
+python Image_cell_segmentation.py --inputPath ../test_data/IDC/ --jsonFile tissue_hires_image.json
 ```
 
 
@@ -79,7 +81,7 @@ python ./stKeep/Image_cell_segmentation.py --inputPath ./test_data/IDC/ --jsonFi
 This function automatically calculates input data for the cell module, including the relations between cells/spots and genes, the links between cells/spots and annotated regions, 50-dimensional representations from highly variable genes, physical spatial location, 2048-dimensional visual features from histological data, and cell/spot positive pairs.
 
 ```
-python ./stKeep/Preprocess_Cell_module.py --inputPath ./test_data/DLPFC_151507/
+python Preprocess_Cell_module.py --inputPath ../test_data/DLPFC_151507/
 ```
 The running time mainly depends on the iteration of the histological image extraction model. It takes ~3h to generate the above-described files. You can modify the following parameters to reduce time:
 
@@ -100,7 +102,7 @@ Optionally, we have provided another method to extract histological features fro
 This function automatically learns cell-module representations by heterogeneous graph learning. It takes ~5 mins for DLPFC_151507.
 
 ```
-python ./stKeep/Cell_model.py --inputPath ./test_data/DLPFC_151507/
+python Cell_model.py --inputPath ../test_data/DLPFC_151507/
 ```
 In running, the useful parameters:
 
@@ -126,7 +128,7 @@ This function automatically calculates input data for the gene module, including
 Note: please check there are 'Protein_protein_interaction_network.txt' and 'Gene_regulatory_network.txt' in the 'utilities' folder. If you can't find it, please download it from link https://drive.google.com/drive/folders/1RTb_gHcpLhnbRMHrqn8tBtynesq5g5DI?usp=drive_link; and then put them into 'utilities' folder. 
 
 ```
-python ./stKeep/Preprocess_Gene_module.py --inputPath ./test_data/DLPFC_151507/
+python Preprocess_Gene_module.py --inputPath ../test_data/DLPFC_151507/ --utilitePath ../utilities/
 ```
 
 #### Learn gene representations by gene module
@@ -134,7 +136,7 @@ python ./stKeep/Preprocess_Gene_module.py --inputPath ./test_data/DLPFC_151507/
 This function automatically learns gene-module representations by heterogeneous graph learning. It takes ~1 min for DLPFC_151507.
 
 ```
-python ./stKeep/Gene_model.py --inputPath ./test_data/DLPFC_151507/
+python Gene_model.py --inputPath ../test_data/DLPFC_151507/
 ```
 
 In running, the useful parameters:
@@ -155,8 +157,8 @@ In running, the useful parameters:
 This function automatically calculates input data for the CCC module, including the denoised and normalized gene expression for ligands and receptors.
 
 ```
-source("./stKeep/Processing.R")
-Preprocess_CCC_model(basePath = "./test_data/DLPFC_151507/", LRP_data = "./utilities/Uninon_Ligand_receptors.RData")
+source("Processing.R")
+Preprocess_CCC_model(basePath = "../test_data/DLPFC_151507/", utili_path = "../utilities/")
 ```
 
 This function loads 4,257 unique ligand-receptor pairs, selects expressed ligands and receptors for further analysis, utilizes knn_smoothing method to denoise gene expression data, and applies the denoised and normalized data for inferring CCC through the CCC model. It takes ~3 mins to generate the above-described files. 
@@ -166,7 +168,7 @@ This function loads 4,257 unique ligand-receptor pairs, selects expressed ligand
 This function automatically learns LRP interaction strength by the CCC module. It takes ~20 min for DLPFC_151507.
 
 ```
-python ./stKeep/CCC_model.py --inputPath ./test_data/DLPFC_151507/
+python CCC_model.py --inputPath ../test_data/DLPFC_151507/
 ```
 
 In running, the useful parameters:
@@ -188,8 +190,9 @@ Some functions from the R file named Processing.R (in the stKeep folder) are bas
 
 ```
 #Generate pdf file including clustering and visualization 
-source("./stKeep/Processing.R")
-basePath       = "./test_data/DLPFC_151507/"
+source("Processing.R")
+basePath       = "../test_data/DLPFC_151507/"
+utili_path     = "../utilities/"
 MP_rep         = as.matrix(read.table( paste0(basePath, "stKeep/Semantic_representations.txt"), header = T, row.names = 1))
 SC_rep         = as.matrix(read.table( paste0(basePath, "stKeep/Hierarchical_representations.txt"), header = T, row.names = 1))
 Cell_obj       = Cell_modules(basePath, cbind(MP_rep, SC_rep), 7, basePath, "stKeep/stKeep_cell_clustering.pdf" )
@@ -201,7 +204,7 @@ Cell_obj       = Cell_modules(basePath, cbind(MP_rep, SC_rep), 7, basePath, "stK
 #Generate cluster-specific gene-gene interactions.
 gene_rep     = as.matrix(read.table( paste0(basePath, "stKeep/Gene_module_representation.txt"), header = T, row.names = 1))
 Gene_obj     = Gene_modules(Cell_obj, gene_rep, 7, basePath, "stKeep/stKeep_gene_clustering.pdf"  )
-TF_TG_links  = Molecular_network(Gene_obj, basePath, "stKeep/stKeep_molecular_network.pdf"  )
+TF_TG_links  = Molecular_network(Gene_obj, utili_path, basePath, "stKeep/stKeep_molecular_network.pdf"  )
 ```
 
 * CCC_modules: identification of CCC patterns from CCC-modules
@@ -231,5 +234,3 @@ Cell_obj     = CCC_modules(Cell_obj, LR_activ, featues, basePath, "stKeep/CCC_pa
 # Citation
 
 Chunman Zuo* and Luonan Chen*. Dissecting tumor microenvironment from spatially resolved transcriptomics data by heterogeneous graph learning. 2023. (submitted).
-
-
