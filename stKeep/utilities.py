@@ -22,9 +22,9 @@ def parameter_setting():
 	
 	parser      = argparse.ArgumentParser(description='Spatial transcriptomics analysis by HIN')
 
-	parser.add_argument('--inputPath',   '-IP', type = str, default = './test_data/DLPFC_151507/',    help='data directory')	
-	parser.add_argument('--outPath', '-od', type=str, default = './test_data/DLPFC_151507/stKeep/', help='Output path')
-	parser.add_argument('--utilitePath',   '-uP', type = str, default = './utilities/',    help='data directory')	
+	parser.add_argument('--inputPath',   '-IP', type = str, default = '../test_data/DLPFC_151507/',    help='data directory')	
+	parser.add_argument('--outPath', '-od', type=str, default = '../test_data/DLPFC_151507/stKeep/', help='Output path')
+	parser.add_argument('--utilitePath',   '-uP', type = str, default = '../utilities/',    help='data directory')	
 
 	parser.add_argument('--spotGene',   '-sGene', type = str, default = 'Spot_gene_neighbors.txt',    help='gene neighbors for each spot')	
 	parser.add_argument('--spotGroup', '-sGroup', type=str, default = 'Spot_groups.txt', help='group neighbors for each spot')
