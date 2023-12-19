@@ -61,8 +61,8 @@ knn_smoothing <- function(mat, k, latent_matrix, seed=42){
   return(S)
 }
 
-Preprocess_CCC_model <- function(basePath = "./test_data/DLPFC_151507/", LRP_data = "./utilities/Uninon_Ligand_receptors.RData"){
-  load(LRP_data)
+Preprocess_CCC_model <- function(basePath = "../test_data/DLPFC_151507/", utili_path = "../utilities/", LRP_data = "Uninon_Ligand_receptors.RData"){
+  load(paste0(utili_path, LRP_data))
   idc             = Load10X_Spatial(data.dir= basePath )
   anno            = read.table(paste0(basePath,"151507_annotation.txt"), header = T, row.names = 1 )
   idc$Annotation  = anno$Layer[match(colnames(idc), row.names(anno))]
@@ -184,9 +184,9 @@ Gene_modules <- function(Cell_obj, Gene_rep, nCluster = 7, save_path = NULL, pdf
 }
 
 
-Molecular_network <- function(Gene_obj, save_path = NULL, pdf_file = NULL ){
+Molecular_network <- function(Gene_obj, utili_path = "../utilities/", save_path = NULL, pdf_file = NULL ){
   uniqu_cl    = unique(as.character(Idents(Gene_obj)))
-  gr_network  = readRDS("./utilities/gr_network.rds")
+  gr_network  = readRDS(paste0(utili_path, "gr_network.rds"))
   from_TG     = to_TG  =  list()
   pdf(paste0( save_path, pdf_file ), width = 20, height = 20)
   for(z in 1:length(uniqu_cl))
