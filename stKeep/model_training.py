@@ -25,7 +25,6 @@ from tqdm import tqdm
 from .utilities import normalize, load_data_RNA, load_data_cell, load_ccc_data
 from .modules import Cell_module, Gene_module, CCI_model, AE
 
-
 def Train_cell_model( args):
 	nei_index, features, sematic_path, positive_pairs, cellName = load_data_cell(args)
 
