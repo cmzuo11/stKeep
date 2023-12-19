@@ -22,11 +22,11 @@ from torch import optim
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-from utilities import normalize, load_data_RNA, load_data_cell, load_ccc_data
-from modules import Cell_module, Gene_module, CCI_model, AE
+from .utilities import normalize, load_data_RNA, load_data_cell, load_ccc_data
+from .modules import Cell_module, Gene_module, CCI_model, AE
 
 
-def Trian_cell_model( args):
+def Train_cell_model( args):
 	nei_index, features, sematic_path, positive_pairs, cellName = load_data_cell(args)
 
 	feat_dim_list  = [i.shape[1] for i in features]
@@ -90,7 +90,7 @@ def Trian_cell_model( args):
 	pd.DataFrame(data=embeds_sc.data.cpu().numpy(), index= cellName).to_csv( args.outPath + 'Hierarchical_representations.txt' , sep='\t')
 
 
-def Trian_gene_model( args ):
+def Train_gene_model( args ):
 
 	nei_index, features, positive_pairs, geneSymbol = load_data_RNA(args)
 	feat_dim_list  = [i.shape[1] for i in features]
@@ -145,7 +145,7 @@ def Trian_gene_model( args ):
 	#torch.save( model.state_dict(), args.outPath + 'Gene_model.pkl' )
 
 
-def Trian_CCC_model( args):
+def Train_CCC_model( args):
 
 	nei_adj, spots_ligand, spots_recep, pos, cellName, LRP_name = load_ccc_data(args)
 
