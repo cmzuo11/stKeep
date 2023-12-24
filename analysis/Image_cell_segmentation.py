@@ -12,20 +12,16 @@ from pathlib import Path
 import os
 import time
 
-from .utilities import parameter_setting
+import stKeep as stKeep
 
 print('Start processing cell segmentation')
 
 start           =  time.time()
 parser          =  stKeep.parameter_setting()
 args            =  parser.parse_args()
+imageSeg_dir    =  args.inputPath
 
-imageSeg_dir    = args.inputPath + 'image_segmentation/'
-imageSeg_d      = Path( imageSeg_dir )
-imageSeg_d.mkdir(parents=True, exist_ok=True)
-
-image_loc_in    = pd.read_csv(args.inputPath + 'spatial/Spot_location.csv', header = 0, index_col = 0)
-
+image_loc_in    = pd.read_csv(imageSeg_dir + 'Spot_location.csv', header = 0, index_col = 0)
 args.jsonFile   = 'tissue_hires_image.json'
 image_width     = 2000
 image_height    = 2000
