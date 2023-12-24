@@ -72,7 +72,7 @@ You can adapt two different methods to define pathological regions, i.e., tumor 
   
 * install the labelme software from the link on Github: https://github.com/wkentaro/labelme, and apply it to manually outline each tumor region based on our defined strategy, and save the annotation into a json file named 'tissue_hires_image.json' of a directory named image_segmentation.
 
-* Define the classification for each spot based on above-generated json file. Here, we use IDC dataset as an example.
+* Define the classification for each spot based on above-generated json file. Here, we use IDC dataset as an example. It takes ~34 mins.
 
 ```
 python Image_cell_segmentation.py --inputPath ../test_data/IDC/ --jsonFile tissue_hires_image.json
