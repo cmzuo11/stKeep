@@ -371,7 +371,7 @@ def get_gene_modules_data(adata, args, gene_select):
 
 	pd.DataFrame( gene_loc_nei_new.reshape(-1,1) ).to_csv( args.outPath + args.geneGroup, header=None, index=None, sep='\t' )
 
-	gene_spot_adj   = np.full((exp_data.shape[1], exp_data.shape[1]), fill_value = -1)
+	gene_spot_adj   = np.full((exp_data.shape[1], exp_data.shape[0]), fill_value = -1)
 
 	for z, index in enumerate(gene_loc_nei_new):
 
