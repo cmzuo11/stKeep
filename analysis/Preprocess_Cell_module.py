@@ -30,6 +30,8 @@ Path(args.outPath).mkdir(parents=True, exist_ok=True)
 print('1---load spatial transcriptomics data')
 adata      = sc.read_visium( args.inputPath )
 adata.var_names_make_unique()
+sc.pp.filter_cells(adata, min_genes=100)
+sc.pp.filter_genes(adata, min_cells=3)
 print('Successfully preprocessed {} genes and {} cells.'.format(adata.n_vars, adata.n_obs))
 
 library_id = list(adata.uns["spatial"].keys())[0]
