@@ -32,6 +32,7 @@ adata      = sc.read_visium( args.inputPath )
 adata.var_names_make_unique()
 sc.pp.filter_cells(adata, min_genes=100)
 sc.pp.filter_genes(adata, min_cells=3)
+sc.pp.highly_variable_genes(adata, n_top_genes=3000, flavor="seurat_v3")
 print('Successfully preprocessed {} genes and {} cells.'.format(adata.n_vars, adata.n_obs))
 
 library_id = list(adata.uns["spatial"].keys())[0]
